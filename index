@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loterías - Project Dashboard</title>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            sidebar: '#1E293B',
+                            bg: '#F8FAFC',
+                            primary: '#3B82F6',
+                            urgent: '#EF4444',
+                            high: '#F59E0B',
+                            medium: '#10B981',
+                            low: '#64748B'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-bg text-slate-800 font-sans flex h-screen overflow-hidden">
+
+    <!-- Navegación Lateral (Oculta en móviles muy pequeños, visible en md+) -->
+    <aside class="hidden md:flex flex-col w-64 bg-brand-sidebar text-white shadow-xl transition-all duration-300">
+        <div class="p-6">
+            <h2 class="text-xl font-bold tracking-wider text-slate-200">LOTERÍAS PRO</h2>
+            <p class="text-xs text-slate-400 mt-1">Gestión Estratégica</p>
+        </div>
+        <nav class="flex-1 px-4 space-y-2">
+            <button onclick="switchView('dashboard', this)" class="nav-item w-full flex items-center gap-3 px-4 py-3 bg-brand-primary rounded-lg text-sm font-medium transition-colors text-left">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Resumen Ejecutivo
+            </button>
+            <button onclick="switchView('roadmap', this)" class="nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors text-left text-slate-300 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+                Roadmap (Gantt)
+            </button>
+            <button onclick="switchView('backlog', this)" class="nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors text-left text-slate-300 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                Gestión de Backlog
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-700">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center font-bold text-sm">PM</div>
+                <div>
+                    <p class="text-sm font-medium">Usuario Activo</p>
+                    <p class="text-xs text-slate-400">Product Manager</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header Móvil -->
+        <header class="md:hidden bg-brand-sidebar text-white p-4 flex justify-between items-center shadow-md z-10">
+            <h2 class="text-lg font-bold">LOTERÍAS PRO</h2>
+            <button class="text-white focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div>
+                    <h1 id="page-title" class="text-2xl md:text-3xl font-bold text-slate-800">Resumen Ejecutivo</h1>
+                    <p class="text-slate-500 text-sm mt-1">Vista general del portafolio de proyectos e iniciativas.</p>
+                </div>
+                <button onclick="openModal()" class="bg-brand-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-blue-500/30 font-medium flex items-center gap-2 transition-all active:scale-95">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Nuevo Proyecto
+                </button>
+            </div>
+
+            <!-- VISTA: DASHBOARD -->
+            <section id="view-dashboard" class="block animate-fade-in">
+                <!-- Tarjetas KPI -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Card 1 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-primary relative overflow-hidden group">
+                        <p class="text-sm font-semibold text-slate-500 mb-1">Iniciativas Activas</p>
+                        <h3 class="text-3xl font-bold text-slate-800">42</h3>
+                        <div class="absolute top-4 right-4 text-blue-100 group-hover:scale-110 transition-transform">
+                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-urgent relative overflow-hidden group">
+                        <p class="text-sm font-semibold text-slate-500 mb-1">Prioridad Muy Alta</p>
+                        <h3 class="text-3xl font-bold text-slate-800">12</h3>
+                        <div class="absolute top-4 right-4 text-red-100 group-hover:scale-110 transition-transform">
+                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path></svg>
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-high relative overflow-hidden group">
+                        <p class="text-sm font-semibold text-slate-500 mb-1">En Desarrollo (1Q)</p>
+                        <h3 class="text-3xl font-bold text-slate-800">8</h3>
+                        <div class="absolute top-4 right-4 text-amber-100 group-hover:scale-110 transition-transform">
+                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
+                        </div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-medium relative overflow-hidden group">
+                        <p class="text-sm font-semibold text-slate-500 mb-1">Impacto Digital</p>
+                        <h3 class="text-3xl font-bold text-slate-800">65<span class="text-lg text-slate-400">%</span></h3>
+                        <div class="absolute top-4 right-4 text-emerald-100 group-hover:scale-110 transition-transform">
+                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos y Tabla Reciente -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Tabla (Ocupa 2/3 en Desktop) -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-700">Backlog Prioritario (Top 5)</h3>
+                            <button class="text-sm text-brand-primary hover:underline">Ver todo</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                                        <th class="p-4 font-medium">Iniciativa</th>
+                                        <th class="p-4 font-medium">Canal</th>
+                                        <th class="p-4 font-medium">Prioridad</th>
+                                        <th class="p-4 font-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-slate-100">
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="p-4 font-medium text-slate-800">Lanzar Tinka checkout en e-commerce</td>
+                                        <td class="p-4 text-slate-600">Digital</td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Muy Alta</span>
+                                        </td>
+                                        <td class="p-4 text-slate-600">1Q</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="p-4 font-medium text-slate-800">Cambio de estructura sorteo TINKA Boliyapa</td>
+                                        <td class="p-4 text-slate-600">Digital</td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Muy Alta</span>
+                                        </td>
+                                        <td class="p-4 text-slate-400 italic">Backlog</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="p-4 font-medium text-slate-800">Integrar billetera digital retail</td>
+                                        <td class="p-4 text-slate-600">Operado/Agente</td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Alta</span>
+                                        </td>
+                                        <td class="p-4 text-slate-400 italic">Backlog</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="p-4 font-medium text-slate-800">Integración de Kashio en TINKA Whatsapp</td>
+                                        <td class="p-4 text-slate-600">Web</td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Media</span>
+                                        </td>
+                                        <td class="p-4 text-slate-400 italic">Backlog</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="p-4 font-medium text-slate-800">Landing de consulta para mostrar detalle cliente</td>
+                                        <td class="p-4 text-slate-600">Digital</td>
+                                        <td class="p-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Media</span>
+                                        </td>
+                                        <td class="p-4 text-slate-400 italic">Backlog</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico (Ocupa 1/3 en Desktop) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex flex-col">
+                        <h3 class="font-bold text-slate-700 mb-4">Distribución por Canal</h3>
+                        <div class="flex-1 relative min-h-[250px] flex justify-center items-center">
+                            <canvas id="canalChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- VISTA: ROADMAP (Placeholder visual) -->
+            <section id="view-roadmap" class="hidden animate-fade-in">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
+                    <div class="w-16 h-16 bg-blue-50 text-brand-primary rounded-full flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-700 mb-2">Roadmap Estratégico</h3>
+                    <p class="text-slate-500 max-w-md">Aquí se integraría una vista de Gantt interactiva mostrando los tiempos de implementación (Oct-Dic, Ene-Mar) para cada canal y pilar.</p>
+                    <button onclick="switchView('dashboard', document.querySelector('.nav-item'))" class="mt-6 text-brand-primary font-medium hover:underline">Volver al Resumen</button>
+                </div>
+            </section>
+
+            <!-- VISTA: BACKLOG (Placeholder visual) -->
+            <section id="view-backlog" class="hidden animate-fade-in">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
+                    <div class="w-16 h-16 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-700 mb-2">Gestión de Backlog</h3>
+                    <p class="text-slate-500 max-w-md">Interfaz en formato tabla editable o Kanban para la actualización masiva de estados y proyectos.</p>
+                    <button onclick="openModal()" class="mt-6 bg-brand-primary text-white px-6 py-2 rounded-lg font-medium shadow hover:bg-blue-600 transition-colors">Ingresar Registro</button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Overlay y Modal de Formulario -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden flex items-center justify-center transition-opacity duration-300 opacity-0">
+        
+        <div id="backlogModal" class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 transform scale-95 transition-all duration-300 opacity-0">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-slate-800">Nueva Iniciativa</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6">
+                <form id="backlogForm" onsubmit="event.preventDefault(); saveBacklog();" class="space-y-4">
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Pilar Estratégico</label>
+                        <select required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-600 bg-slate-50">
+                            <option value="">Selecciona el pilar impactado...</option>
+                            <option>Ganar con oferta comercial más competitiva</option>
+                            <option>Mayor acceso y mejor experiencia</option>
+                            <option>Elevar Eficiencia y Productividad</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Acción / Iniciativa</label>
+                        <textarea required rows="2" placeholder="Describe brevemente la acción (Ej. Integración Yape on File...)" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-700 bg-slate-50 resize-none"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Canal</label>
+                            <select required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-600 bg-slate-50">
+                                <option>Todos</option>
+                                <option>Digital</option>
+                                <option>Operado/Agente</option>
+                                <option>Web</option>
+                                <option>Inlane</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">Prioridad</label>
+                            <select required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-600 bg-slate-50">
+                                <option class="text-red-600 font-bold">Muy Alta</option>
+                                <option class="text-amber-600 font-bold">Alta</option>
+                                <option class="text-emerald-600 font-bold">Media</option>
+                                <option class="text-slate-600 font-bold">Baja</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Footer -->
+                    <div class="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-6">
+                        <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+                        <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-brand-primary hover:bg-blue-600 rounded-lg shadow-md shadow-blue-500/20 transition-all active:scale-95">Guardar Proyecto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema de Notificación (Toast) -->
+    <div id="toastMessage" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 pointer-events-none">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span class="font-medium">Iniciativa agregada al Backlog exitosamente.</span>
+    </div>
+
+    <!-- Estilo para animaciones básicas -->
+    <style>
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    <!-- Lógica de Interacción -->
+    <script>
+        // Lógica de Navegación del Menú
+        function switchView(viewId, element) {
+            // Actualizar estilo del menú
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-brand-primary', 'text-white');
+                el.classList.add('hover:bg-slate-800', 'text-slate-300');
+            });
+            
+            if(element) {
+                element.classList.remove('hover:bg-slate-800', 'text-slate-300');
+                element.classList.add('bg-brand-primary', 'text-white');
+            }
+
+            // Cambiar Título del Header
+            const titleMap = {
+                'dashboard': 'Resumen Ejecutivo',
+                'roadmap': 'Roadmap Estratégico (Gantt)',
+                'backlog': 'Gestión de Backlog'
+            };
+            document.getElementById('page-title').innerText = titleMap[viewId] || 'Dashboard';
+
+            // Ocultar todas las vistas y mostrar la seleccionada
+            ['view-dashboard', 'view-roadmap', 'view-backlog'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+        }
+
+        // Lógica del Modal
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modal = document.getElementById('backlogModal');
+
+        function openModal() {
+            modalOverlay.classList.remove('hidden');
+            // Timeout para permitir que la clase hidden se aplique antes de cambiar opacidad
+            setTimeout(() => {
+                modalOverlay.classList.remove('opacity-0');
+                modal.classList.remove('opacity-0', 'scale-95');
+                modal.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            modalOverlay.classList.add('opacity-0');
+            modal.classList.remove('scale-100');
+            modal.classList.add('opacity-0', 'scale-95');
+            
+            setTimeout(() => {
+                modalOverlay.classList.add('hidden');
+                document.getElementById('backlogForm').reset(); // Limpiar formulario
+            }, 300); // Tiempo de la transición de Tailwind
+        }
+
+        // Simulación de guardado y mensaje dinámico
+        function saveBacklog() {
+            closeModal();
+            showToast();
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toastMessage');
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500); // Ocultar después de 3.5 segundos
+        }
+
+        // Inicialización de Gráfico Chart.js
+        document.addEventListener("DOMContentLoaded", function() {
+            const ctx = document.getElementById('canalChart').getContext('2d');
+            
+            // Configurar default font de Chart.js para que haga match con la web
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748B';
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Digital', 'Operado/Agente', 'Web / Retail', 'Transversal'],
+                    datasets: [{
+                        data: [28, 12, 10, 5],
+                        backgroundColor: [
+                            '#3B82F6', // Blue (Digital)
+                            '#10B981', // Emerald (Operado/Agente)
+                            '#F59E0B', // Amber (Web/Retail)
+                            '#64748B'  // Slate (Transversal/Todos)
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: '#1E293B',
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
