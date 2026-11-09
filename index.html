@@ -3,436 +3,739 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loterías - Project Dashboard</title>
+    <title>PMO Dashboard - Data Driven</title>
     
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            sidebar: '#1E293B',
-                            bg: '#F8FAFC',
-                            primary: '#3B82F6',
-                            urgent: '#EF4444',
-                            high: '#F59E0B',
-                            medium: '#10B981',
-                            low: '#64748B'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-brand-bg text-slate-800 font-sans flex h-screen overflow-hidden">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Navegación Lateral (Oculta en móviles muy pequeños, visible en md+) -->
-    <aside class="hidden md:flex flex-col w-64 bg-brand-sidebar text-white shadow-xl transition-all duration-300">
-        <div class="p-6">
-            <h2 class="text-xl font-bold tracking-wider text-slate-200">LOTERÍAS PRO</h2>
-            <p class="text-xs text-slate-400 mt-1">Gestión Estratégica</p>
+    <style>
+        /* CSS VARIABLES */
+        :root {
+            --slate-50: #f8fafc; --slate-100: #f1f5f9; --slate-200: #e2e8f0; 
+            --slate-300: #cbd5e1; --slate-500: #64748b; --slate-700: #334155; 
+            --slate-800: #1e293b; --slate-900: #0f172a;
+            --blue-500: #3b82f6; --blue-600: #2563eb; --emerald-500: #10b981; 
+            --red-500: #ef4444; --amber-500: #f59e0b; --purple-500: #8b5cf6;
+            --font-family: 'Inter', system-ui, sans-serif;
+            --radius-md: 8px; --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1); --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-family); background-color: var(--slate-50); color: var(--slate-800); display: flex; height: 100vh; overflow: hidden; }
+        button, select, input { font-family: inherit; }
+        svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+        /* LAYOUT */
+        .sidebar { width: 260px; background-color: var(--slate-900); color: white; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--slate-800); }
+        .nav-menu { padding: 16px; flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        .nav-btn { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; background: transparent; color: var(--slate-300); font-size: 0.9rem; font-weight: 500; text-align: left; border-radius: var(--radius-md); transition: all 0.2s; cursor: pointer; border:none; }
+        .nav-btn:hover { background-color: var(--slate-800); color: white; }
+        .nav-btn.active { background-color: var(--blue-600); color: white; }
+
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
+        .scroll-area { flex-grow: 1; overflow-y: auto; padding: 32px; }
+        
+        .view-section { display: none; animation: fadeIn 0.3s ease-out; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* COMPONENTS */
+        .btn-primary { background: var(--blue-600); color: white; padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; border:none;}
+        .btn-secondary { background: var(--slate-200); color: var(--slate-800); padding: 10px 20px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.9rem; cursor: pointer; border:none;}
+        
+        .card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--slate-200); padding: 24px; margin-bottom: 24px; box-shadow: var(--shadow-sm); }
+        .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 16px; color: var(--slate-800); border-bottom: 2px solid var(--slate-100); padding-bottom: 12px; }
+        
+        /* BULLET CHARTS */
+        .bullet-container { margin-bottom: 20px; }
+        .bullet-labels { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--slate-700); }
+        .bullet-track { position: relative; height: 24px; background-color: var(--slate-200); border-radius: 4px; overflow: hidden; }
+        .bullet-real { position: absolute; top: 0; left: 0; height: 100%; border-radius: 4px; transition: width 0.5s ease-out; }
+        .bullet-target { position: absolute; top: -4px; bottom: -4px; width: 4px; background-color: var(--slate-900); z-index: 10; border-radius: 2px; }
+        
+        .bg-blue { background-color: var(--blue-500); }
+        .bg-emerald { background-color: var(--emerald-500); }
+        .bg-amber { background-color: var(--amber-500); }
+        .bg-purple { background-color: var(--purple-500); }
+
+        /* FILTERS */
+        .filter-bar { background: white; padding: 16px 24px; border-radius: var(--radius-lg); border: 1px solid var(--slate-200); margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; box-shadow: var(--shadow-sm); }
+        .filter-group { display: flex; flex-direction: column; flex: 1; min-width: 150px; }
+        .filter-group label { font-size: 0.75rem; font-weight: 600; color: var(--slate-500); text-transform: uppercase; margin-bottom: 6px; }
+        .filter-group select, .filter-group input { padding: 8px 12px; border: 1px solid var(--slate-300); border-radius: var(--radius-md); font-size: 0.85rem; color: var(--slate-700); }
+
+        /* MASTER/DETAIL BACKLOGS */
+        .project-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--slate-200); overflow: hidden; margin-bottom: 32px; box-shadow: var(--shadow-sm); }
+        .project-card-header { background: var(--slate-50); padding: 20px 24px; border-bottom: 1px solid var(--slate-200); display: flex; justify-content: space-between; align-items: center; }
+        .project-card-title h3 { font-size: 1.1rem; font-weight: 700; color: var(--slate-900); }
+        .project-card-title p { font-size: 0.85rem; color: var(--slate-500); margin-top: 4px; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { background: white; padding: 12px 24px; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--slate-500); border-bottom: 2px solid var(--slate-200); }
+        td { padding: 12px 24px; font-size: 0.85rem; color: var(--slate-700); border-bottom: 1px solid var(--slate-100); }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; background: var(--slate-100); }
+        
+        /* GANTT */
+        .gantt-grid { display: grid; grid-template-columns: 250px repeat(12, minmax(40px, 1fr)); border: 1px solid var(--slate-200); border-radius: var(--radius-lg); overflow:hidden; background:white; }
+        .gantt-header { background: var(--slate-50); padding: 8px; font-weight: 600; font-size: 0.8rem; border-bottom: 1px solid var(--slate-200); text-align: center; }
+        .gantt-row { display: contents; }
+        .gantt-title { padding: 12px; font-size: 0.85rem; font-weight: 500; border-bottom: 1px solid var(--slate-200); background: white; }
+        .gantt-task-title { padding: 8px 12px 8px 32px; font-size: 0.8rem; font-weight: 400; border-bottom: 1px solid var(--slate-100); background: #fdfdfd; color: var(--slate-600); }
+        .gantt-track { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(12, 1fr); border-bottom: 1px solid var(--slate-200); align-items: center; padding: 4px 0; }
+        .gantt-bar { height: 20px; border-radius: 4px; color: white; display: flex; align-items: center; padding: 0 8px; font-size: 0.7rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s;}
+        .gantt-bar:hover { transform: scaleY(1.1); }
+        
+        .loader-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; gap:10px; }
+        .spinner { border: 4px solid var(--slate-200); border-top: 4px solid var(--blue-600); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* TOAST NOTIFICATION */
+        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--emerald-500); color: white; padding: 12px 24px; border-radius: var(--radius-md); box-shadow: var(--shadow-md); font-weight: 500; font-size: 0.9rem; transform: translateY(100px); opacity: 0; transition: all 0.3s ease; z-index: 10000; display: flex; align-items: center; gap: 8px; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="loader-overlay">
+        <div class="spinner"></div>
+        <p style="font-weight: 600; color: var(--slate-700);">Sincronizando con Google Sheets...</p>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>PMO DASHBOARD</h2>
         </div>
-        <nav class="flex-1 px-4 space-y-2">
-            <button onclick="switchView('dashboard', this)" class="nav-item w-full flex items-center gap-3 px-4 py-3 bg-brand-primary rounded-lg text-sm font-medium transition-colors text-left">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+        <nav class="nav-menu">
+            <button class="nav-btn active" onclick="switchView('view-resumen', 'Resumen Ejecutivo', 'Progreso en tiempo real')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Resumen Ejecutivo
             </button>
-            <button onclick="switchView('roadmap', this)" class="nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors text-left text-slate-300 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path></svg>
+            <button class="nav-btn" onclick="switchView('view-roadmap', 'Roadmap (Gantt)', 'Cronograma Estratégico')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 Roadmap (Gantt)
             </button>
-            <button onclick="switchView('backlog', this)" class="nav-item w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg text-sm font-medium transition-colors text-left text-slate-300 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                Gestión de Backlog
+            <button class="nav-btn" onclick="switchView('view-proyectos', 'Portafolio de Proyectos', 'Proyectos por Pilar e Iniciativa')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                Portafolio de Proyectos
+            </button>
+            <button class="nav-btn" onclick="switchView('view-backlogs', 'Backlog de Tareas', 'Gestión de Hitos por Proyecto')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                Backlog de Tareas
             </button>
         </nav>
-        <div class="p-4 border-t border-slate-700">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-brand-primary flex items-center justify-center font-bold text-sm">PM</div>
-                <div>
-                    <p class="text-sm font-medium">Usuario Activo</p>
-                    <p class="text-xs text-slate-400">Product Manager</p>
-                </div>
-            </div>
-        </div>
     </aside>
 
-    <!-- Contenido Principal -->
-    <main class="flex-1 flex flex-col h-screen overflow-hidden">
-        
-        <!-- Header Móvil -->
-        <header class="md:hidden bg-brand-sidebar text-white p-4 flex justify-between items-center shadow-md z-10">
-            <h2 class="text-lg font-bold">LOTERÍAS PRO</h2>
-            <button class="text-white focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    <!-- MAIN -->
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <h1 id="header-title" style="font-size: 1.5rem; font-weight: 700;">Resumen Ejecutivo</h1>
+                <p id="header-subtitle" style="font-size: 0.85rem; color: var(--slate-500); margin-top: 4px;">Progreso en tiempo real</p>
+            </div>
+            <button class="btn-primary" onclick="syncData()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
+                Sincronizar Datos
             </button>
         </header>
 
-        <div class="flex-1 overflow-y-auto p-4 md:p-8">
+        <div class="scroll-area">
             
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-                <div>
-                    <h1 id="page-title" class="text-2xl md:text-3xl font-bold text-slate-800">Resumen Ejecutivo</h1>
-                    <p class="text-slate-500 text-sm mt-1">Vista general del portafolio de proyectos e iniciativas.</p>
+            <!-- GLOBAL FILTERS (Movido aquí para afectar a todas las vistas) -->
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Pilar Estratégico</label>
+                    <select id="filter-pilar" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
                 </div>
-                <button onclick="openModal()" class="bg-brand-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg shadow-lg shadow-blue-500/30 font-medium flex items-center gap-2 transition-all active:scale-95">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Nuevo Proyecto
-                </button>
+                <div class="filter-group">
+                    <label>Iniciativa</label>
+                    <select id="filter-iniciativa" onchange="applyFilters()">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Status General</label>
+                    <select id="filter-status" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Canal</label>
+                    <select id="filter-canal" onchange="applyFilters()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Buscar Proyecto</label>
+                    <input type="text" id="filter-search" placeholder="Escriba para buscar..." onkeyup="applyFilters()">
+                </div>
+                <button class="btn-secondary" onclick="resetFilters()">Limpiar</button>
             </div>
 
-            <!-- VISTA: DASHBOARD -->
-            <section id="view-dashboard" class="block animate-fade-in">
-                <!-- Tarjetas KPI -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <!-- Card 1 -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-primary relative overflow-hidden group">
-                        <p class="text-sm font-semibold text-slate-500 mb-1">Iniciativas Activas</p>
-                        <h3 class="text-3xl font-bold text-slate-800">42</h3>
-                        <div class="absolute top-4 right-4 text-blue-100 group-hover:scale-110 transition-transform">
-                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                        </div>
-                    </div>
-                    <!-- Card 2 -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-urgent relative overflow-hidden group">
-                        <p class="text-sm font-semibold text-slate-500 mb-1">Prioridad Muy Alta</p>
-                        <h3 class="text-3xl font-bold text-slate-800">12</h3>
-                        <div class="absolute top-4 right-4 text-red-100 group-hover:scale-110 transition-transform">
-                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"></path></svg>
-                        </div>
-                    </div>
-                    <!-- Card 3 -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-high relative overflow-hidden group">
-                        <p class="text-sm font-semibold text-slate-500 mb-1">En Desarrollo (1Q)</p>
-                        <h3 class="text-3xl font-bold text-slate-800">8</h3>
-                        <div class="absolute top-4 right-4 text-amber-100 group-hover:scale-110 transition-transform">
-                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path></svg>
-                        </div>
-                    </div>
-                    <!-- Card 4 -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 border-l-4 border-l-brand-medium relative overflow-hidden group">
-                        <p class="text-sm font-semibold text-slate-500 mb-1">Impacto Digital</p>
-                        <h3 class="text-3xl font-bold text-slate-800">65<span class="text-lg text-slate-400">%</span></h3>
-                        <div class="absolute top-4 right-4 text-emerald-100 group-hover:scale-110 transition-transform">
-                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"></path></svg>
-                        </div>
-                    </div>
-                </div>
+            <!-- VIEW 1: RESUMEN -->
+            <section id="view-resumen" class="view-section active">
+                <div id="resumen-container"></div>
+            </section>
 
-                <!-- Gráficos y Tabla Reciente -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    <!-- Tabla (Ocupa 2/3 en Desktop) -->
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
-                            <h3 class="font-bold text-slate-700">Backlog Prioritario (Top 5)</h3>
-                            <button class="text-sm text-brand-primary hover:underline">Ver todo</button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                                        <th class="p-4 font-medium">Iniciativa</th>
-                                        <th class="p-4 font-medium">Canal</th>
-                                        <th class="p-4 font-medium">Prioridad</th>
-                                        <th class="p-4 font-medium">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-sm divide-y divide-slate-100">
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="p-4 font-medium text-slate-800">Lanzar Tinka checkout en e-commerce</td>
-                                        <td class="p-4 text-slate-600">Digital</td>
-                                        <td class="p-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Muy Alta</span>
-                                        </td>
-                                        <td class="p-4 text-slate-600">1Q</td>
-                                    </tr>
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="p-4 font-medium text-slate-800">Cambio de estructura sorteo TINKA Boliyapa</td>
-                                        <td class="p-4 text-slate-600">Digital</td>
-                                        <td class="p-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Muy Alta</span>
-                                        </td>
-                                        <td class="p-4 text-slate-400 italic">Backlog</td>
-                                    </tr>
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="p-4 font-medium text-slate-800">Integrar billetera digital retail</td>
-                                        <td class="p-4 text-slate-600">Operado/Agente</td>
-                                        <td class="p-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">Alta</span>
-                                        </td>
-                                        <td class="p-4 text-slate-400 italic">Backlog</td>
-                                    </tr>
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="p-4 font-medium text-slate-800">Integración de Kashio en TINKA Whatsapp</td>
-                                        <td class="p-4 text-slate-600">Web</td>
-                                        <td class="p-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Media</span>
-                                        </td>
-                                        <td class="p-4 text-slate-400 italic">Backlog</td>
-                                    </tr>
-                                    <tr class="hover:bg-slate-50 transition-colors">
-                                        <td class="p-4 font-medium text-slate-800">Landing de consulta para mostrar detalle cliente</td>
-                                        <td class="p-4 text-slate-600">Digital</td>
-                                        <td class="p-4">
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Media</span>
-                                        </td>
-                                        <td class="p-4 text-slate-400 italic">Backlog</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Gráfico (Ocupa 1/3 en Desktop) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-5 flex flex-col">
-                        <h3 class="font-bold text-slate-700 mb-4">Distribución por Canal</h3>
-                        <div class="flex-1 relative min-h-[250px] flex justify-center items-center">
-                            <canvas id="canalChart"></canvas>
-                        </div>
-                    </div>
-
+            <!-- VIEW 2: ROADMAP -->
+            <section id="view-roadmap" class="view-section">
+                <div class="gantt-grid" id="roadmap-container">
+                    <!-- Dynamic Headers and Rows will be injected here -->
                 </div>
             </section>
 
-            <!-- VISTA: ROADMAP (Placeholder visual) -->
-            <section id="view-roadmap" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
-                    <div class="w-16 h-16 bg-blue-50 text-brand-primary rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-700 mb-2">Roadmap Estratégico</h3>
-                    <p class="text-slate-500 max-w-md">Aquí se integraría una vista de Gantt interactiva mostrando los tiempos de implementación (Oct-Dic, Ene-Mar) para cada canal y pilar.</p>
-                    <button onclick="switchView('dashboard', document.querySelector('.nav-item'))" class="mt-6 text-brand-primary font-medium hover:underline">Volver al Resumen</button>
-                </div>
+            <!-- VIEW 3: PROYECTOS -->
+            <section id="view-proyectos" class="view-section">
+                <!-- Filtros removidos de aquí -->
+                <div id="proyectos-container"></div>
             </section>
 
-            <!-- VISTA: BACKLOG (Placeholder visual) -->
-            <section id="view-backlog" class="hidden animate-fade-in">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
-                    <div class="w-16 h-16 bg-slate-50 text-slate-600 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            <!-- VIEW 4: BACKLOGS -->
+            <section id="view-backlogs" class="view-section">
+                <div class="card" style="margin-bottom: 24px;">
+                    <div style="display: flex; gap: 16px; align-items: flex-end;">
+                        <div style="flex-grow: 1;">
+                            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--slate-700); margin-bottom: 8px;">Seleccionar Proyecto:</label>
+                            <select id="project-selector" style="width: 100%; padding: 10px; border: 1px solid var(--slate-300); border-radius: var(--radius-md);" onchange="renderBacklogTasks()">
+                                <option value="">Elige un proyecto para ver su backlog...</option>
+                            </select>
+                        </div>
+                        <button class="btn-primary" onclick="openTaskModal()">+ Agregar Hito/Acción</button>
                     </div>
-                    <h3 class="text-xl font-bold text-slate-700 mb-2">Gestión de Backlog</h3>
-                    <p class="text-slate-500 max-w-md">Interfaz en formato tabla editable o Kanban para la actualización masiva de estados y proyectos.</p>
-                    <button onclick="openModal()" class="mt-6 bg-brand-primary text-white px-6 py-2 rounded-lg font-medium shadow hover:bg-blue-600 transition-colors">Ingresar Registro</button>
+                </div>
+                <div id="tasks-container">
+                    <div style="text-align: center; padding: 40px; color: var(--slate-500);">Selecciona un proyecto para ver sus tareas.</div>
                 </div>
             </section>
-
         </div>
     </main>
 
-    <!-- Overlay y Modal de Formulario -->
-    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden flex items-center justify-center transition-opacity duration-300 opacity-0">
-        
-        <div id="backlogModal" class="bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4 transform scale-95 transition-all duration-300 opacity-0">
-            <!-- Modal Header -->
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-slate-800">Nueva Iniciativa</h2>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-full p-2 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            
-            <!-- Modal Body -->
-            <div class="p-6">
-                <form id="backlogForm" onsubmit="event.preventDefault(); saveBacklog();" class="space-y-4">
-                    
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Pilar Estratégico</label>
-                        <select required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-600 bg-slate-50">
-                            <option value="">Selecciona el pilar impactado...</option>
-                            <option>Ganar con oferta comercial más competitiva</option>
-                            <option>Mayor acceso y mejor experiencia</option>
-                            <option>Elevar Eficiencia y Productividad</option>
-                        </select>
+    <!-- MODAL AGREGAR TAREA -->
+    <div id="taskModalOverlay" class="loader-overlay" style="display: none; background: rgba(15, 23, 42, 0.6); align-items: center;">
+        <div style="background: white; padding: 24px; border-radius: var(--radius-lg); width: 400px; box-shadow: var(--shadow-md);">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">Agregar Acción / Hito</h3>
+            <form onsubmit="event.preventDefault(); saveTask();" style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 600;">Nombre del Hito</label>
+                    <input type="text" id="task-name" required style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid var(--slate-300); border-radius: 4px;">
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 600;">Responsable</label>
+                    <input type="text" id="task-assignee" required style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid var(--slate-300); border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 12px; margin-top: 4px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Fecha Inicio</label>
+                        <input type="date" id="task-start" required style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid var(--slate-300); border-radius: 4px;">
                     </div>
-                    
-                    <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Acción / Iniciativa</label>
-                        <textarea required rows="2" placeholder="Describe brevemente la acción (Ej. Integración Yape on File...)" class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-700 bg-slate-50 resize-none"></textarea>
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.85rem; font-weight: 600;">Fecha Fin</label>
+                        <input type="date" id="task-end" required style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid var(--slate-300); border-radius: 4px;">
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Canal</label>
-                            <select required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-600 bg-slate-50">
-                                <option>Todos</option>
-                                <option>Digital</option>
-                                <option>Operado/Agente</option>
-                                <option>Web</option>
-                                <option>Inlane</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-1">Prioridad</label>
-                            <select required class="w-full px-4 py-2.5 rounded-lg border border-slate-200 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all text-slate-600 bg-slate-50">
-                                <option class="text-red-600 font-bold">Muy Alta</option>
-                                <option class="text-amber-600 font-bold">Alta</option>
-                                <option class="text-emerald-600 font-bold">Media</option>
-                                <option class="text-slate-600 font-bold">Baja</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <!-- Modal Footer -->
-                    <div class="pt-4 flex justify-end gap-3 border-t border-slate-100 mt-6">
-                        <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
-                        <button type="submit" class="px-5 py-2.5 text-sm font-medium text-white bg-brand-primary hover:bg-blue-600 rounded-lg shadow-md shadow-blue-500/20 transition-all active:scale-95">Guardar Proyecto</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: 600;">Estado</label>
+                    <select id="task-status" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid var(--slate-300); border-radius: 4px;">
+                        <option>Backlog</option>
+                        <option>En Progreso</option>
+                        <option>Completado</option>
+                    </select>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                    <button type="button" class="btn-secondary" onclick="closeTaskModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Sistema de Notificación (Toast) -->
-    <div id="toastMessage" class="fixed bottom-6 right-6 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 z-50 pointer-events-none">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span class="font-medium">Iniciativa agregada al Backlog exitosamente.</span>
+    <!-- TOAST ELEMENT -->
+    <div id="toast-notification" class="toast">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span id="toast-message">Datos sincronizados con éxito</span>
     </div>
 
-    <!-- Estilo para animaciones básicas -->
-    <style>
-        .animate-fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
-
-    <!-- Lógica de Interacción -->
+    <!-- JAVASCRIPT (DATA & RENDER ENGINE) -->
     <script>
-        // Lógica de Navegación del Menú
-        function switchView(viewId, element) {
-            // Actualizar estilo del menú
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('bg-brand-primary', 'text-white');
-                el.classList.add('hover:bg-slate-800', 'text-slate-300');
-            });
+        // ESTADO GLOBAL DE LA APP
+        const appState = {
+            data: [], // Lista de Proyectos desde Sheets
+            filteredData: [], // Nueva lista para mantener los datos filtrados globalmente
+            proyectosAgrupados: {}, // Jerarquía Pilar > Iniciativa > Proyecto
+            tareas: {} // Memoria local para Backlogs de cada proyecto: { "NombreProyecto": [{hito, status}] }
+        };
+
+        // DATOS DE RESPALDO
+        const fallbackData = [
+            { pilar: "Ganar con una oferta comercial más competitiva", iniciativa: "Mejora de propuesta de valor", proyecto: "Optimizar matriz de premios: Tinka", canal: "Todos", prioridad: "Muy Alta", status: "1Q" },
+            { pilar: "Ganar con una oferta comercial más competitiva", iniciativa: "Mayor innovación de Portafolio", proyecto: "Lanzamiento de raspes digitales para retail", canal: "Operado/Agente", prioridad: "Baja", status: "Backlog" },
+            { pilar: "Mayor acceso, mejor experiencia", iniciativa: "Aumentar acceso al juego", proyecto: "Suscripción para Kábala y Ganadiario", canal: "Digital", prioridad: "Alta", status: "1Q" }
+        ];
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', async () => {
+            await fetchGoogleSheetData();
+            processDataStructure();
+            renderAllViews();
+            document.getElementById('loader').style.display = 'none';
+        });
+
+        // FETCH DATA
+        async function fetchGoogleSheetData() {
+            const sheetId = '1lXvceKy-lpRsoQ8KpNVTifewwMrqYEePz-055XdTu6M';
+            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
             
-            if(element) {
-                element.classList.remove('hover:bg-slate-800', 'text-slate-300');
-                element.classList.add('bg-brand-primary', 'text-white');
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                // Extract JSON from Gviz response
+                const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const json = JSON.parse(jsonStr);
+                
+                // Mapear Columnas (Ignorando la fila 0 que contiene las cabeceras con slice(1))
+                appState.data = json.table.rows.slice(1).map(row => {
+                    return {
+                        pilar: row.c[0] ? row.c[0].v : 'Sin Pilar',
+                        iniciativa: row.c[1] ? row.c[1].v : 'Sin Iniciativa',
+                        proyecto: row.c[2] ? row.c[2].v : 'Sin Nombre',
+                        canal: row.c[4] ? row.c[4].v : '-',
+                        prioridad: row.c[5] ? row.c[5].v : 'Media',
+                        status: row.c[6] ? row.c[6].v : 'Backlog'
+                    };
+                }).filter(row => row.proyecto !== 'Sin Nombre'); 
+
+                console.log("Datos de Google Sheets cargados con éxito!");
+
+            } catch (error) {
+                console.warn("Fallo lectura de Sheets (posible CORS). Usando Fallback Data local.");
+                appState.data = fallbackData;
             }
-
-            // Cambiar Título del Header
-            const titleMap = {
-                'dashboard': 'Resumen Ejecutivo',
-                'roadmap': 'Roadmap Estratégico (Gantt)',
-                'backlog': 'Gestión de Backlog'
-            };
-            document.getElementById('page-title').innerText = titleMap[viewId] || 'Dashboard';
-
-            // Ocultar todas las vistas y mostrar la seleccionada
-            ['view-dashboard', 'view-roadmap', 'view-backlog'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-            });
-            document.getElementById(`view-${viewId}`).classList.remove('hidden');
         }
 
-        // Lógica del Modal
-        const modalOverlay = document.getElementById('modalOverlay');
-        const modal = document.getElementById('backlogModal');
-
-        function openModal() {
-            modalOverlay.classList.remove('hidden');
-            // Timeout para permitir que la clase hidden se aplique antes de cambiar opacidad
-            setTimeout(() => {
-                modalOverlay.classList.remove('opacity-0');
-                modal.classList.remove('opacity-0', 'scale-95');
-                modal.classList.add('scale-100');
-            }, 10);
-        }
-
-        function closeModal() {
-            modalOverlay.classList.add('opacity-0');
-            modal.classList.remove('scale-100');
-            modal.classList.add('opacity-0', 'scale-95');
+        // PROCESAR DATOS
+        function processDataStructure() {
+            appState.proyectosAgrupados = {};
+            appState.filteredData = [...appState.data]; // Por defecto, mostramos todos
             
-            setTimeout(() => {
-                modalOverlay.classList.add('hidden');
-                document.getElementById('backlogForm').reset(); // Limpiar formulario
-            }, 300); // Tiempo de la transición de Tailwind
-        }
-
-        // Simulación de guardado y mensaje dinámico
-        function saveBacklog() {
-            closeModal();
-            showToast();
-        }
-
-        function showToast() {
-            const toast = document.getElementById('toastMessage');
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0');
-            }, 3500); // Ocultar después de 3.5 segundos
-        }
-
-        // Inicialización de Gráfico Chart.js
-        document.addEventListener("DOMContentLoaded", function() {
-            const ctx = document.getElementById('canalChart').getContext('2d');
-            
-            // Configurar default font de Chart.js para que haga match con la web
-            Chart.defaults.font.family = "'Inter', sans-serif";
-            Chart.defaults.color = '#64748B';
-
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Digital', 'Operado/Agente', 'Web / Retail', 'Transversal'],
-                    datasets: [{
-                        data: [28, 12, 10, 5],
-                        backgroundColor: [
-                            '#3B82F6', // Blue (Digital)
-                            '#10B981', // Emerald (Operado/Agente)
-                            '#F59E0B', // Amber (Web/Retail)
-                            '#64748B'  // Slate (Transversal/Todos)
-                        ],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: { 
-                        legend: { 
-                            position: 'bottom',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle'
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: '#1E293B',
-                            padding: 12,
-                            cornerRadius: 8,
-                            displayColors: false
-                        }
-                    }
+            appState.data.forEach(item => {
+                // Inicializar arreglo de tareas vacío si no existe
+                if(!appState.tareas[item.proyecto]) {
+                    appState.tareas[item.proyecto] = [];
                 }
             });
-        });
+            
+            populateFilters();
+            updateProjectSelector();
+        }
+
+        function updateProjectSelector() {
+            const selector = document.getElementById('project-selector');
+            const currentVal = selector.value;
+            selector.innerHTML = '<option value="">Elige un proyecto para ver su backlog...</option>';
+            
+            appState.filteredData.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.proyecto;
+                opt.innerText = item.proyecto;
+                selector.appendChild(opt);
+            });
+
+            // Si el proyecto seleccionado aún existe en los resultados filtrados, lo mantenemos
+            if (Array.from(selector.options).some(opt => opt.value === currentVal)) {
+                selector.value = currentVal;
+            } else {
+                selector.value = "";
+            }
+        }
+
+        // FUNCIONES DE FILTRO
+        function populateFilters() {
+            const pilares = new Set();
+            const iniciativas = new Set();
+            const statuses = new Set();
+            const canales = new Set();
+
+            appState.data.forEach(item => {
+                if (item.pilar) pilares.add(item.pilar);
+                if (item.iniciativa) iniciativas.add(item.iniciativa);
+                if (item.status) statuses.add(item.status);
+                if (item.canal && item.canal !== '-') canales.add(item.canal);
+            });
+
+            const pilarSelect = document.getElementById('filter-pilar');
+            pilarSelect.innerHTML = '<option value="">Todos</option>';
+            pilares.forEach(p => pilarSelect.innerHTML += `<option value="${p}">${p}</option>`);
+
+            const initSelect = document.getElementById('filter-iniciativa');
+            initSelect.innerHTML = '<option value="">Todas</option>';
+            iniciativas.forEach(i => initSelect.innerHTML += `<option value="${i}">${i}</option>`);
+
+            const statusSelect = document.getElementById('filter-status');
+            statusSelect.innerHTML = '<option value="">Todos</option>';
+            statuses.forEach(s => statusSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+            const canalSelect = document.getElementById('filter-canal');
+            canalSelect.innerHTML = '<option value="">Todos</option>';
+            canales.forEach(c => canalSelect.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        function applyFilters() {
+            const filterPilar = document.getElementById('filter-pilar').value;
+            const filterIniciativa = document.getElementById('filter-iniciativa').value;
+            const filterStatus = document.getElementById('filter-status').value;
+            const filterCanal = document.getElementById('filter-canal').value;
+            const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+            
+            // Actualizamos la fuente de datos global filtrada
+            appState.filteredData = appState.data.filter(item => {
+                let match = true;
+                if (filterPilar && item.pilar !== filterPilar) match = false;
+                if (filterIniciativa && item.iniciativa !== filterIniciativa) match = false;
+                if (filterStatus && item.status !== filterStatus) match = false;
+                if (filterCanal && item.canal !== filterCanal) match = false;
+                if (filterSearch && (!item.proyecto || !item.proyecto.toLowerCase().includes(filterSearch))) match = false;
+                return match;
+            });
+
+            updateProjectSelector();
+            renderAllViews();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-pilar').value = '';
+            document.getElementById('filter-iniciativa').value = '';
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-canal').value = '';
+            document.getElementById('filter-search').value = '';
+            applyFilters();
+        }
+
+        // FUNCIONES DE SINCRONIZACIÓN MANUAL Y TOAST
+        async function syncData() {
+            document.getElementById('loader').style.display = 'flex';
+            
+            appState.data = [];
+            // Nota: No limpiamos appState.tareas para no perder los hitos locales ingresados
+            
+            await fetchGoogleSheetData();
+            processDataStructure();
+            renderAllViews();
+            
+            document.getElementById('loader').style.display = 'none';
+            showToast("Datos sincronizados con Google Sheets");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast-notification');
+            document.getElementById('toast-message').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // MOTOR DE RENDERIZADO
+        function renderAllViews() {
+            renderResumen();
+            renderRoadmap();
+            renderProyectos();
+            renderBacklogTasks();
+        }
+
+        function calculateProgress(tasks) {
+            if (tasks.length === 0) return { real: 0, target: 80 };
+            // Simulación de cálculo: 1Q o Desarrollo = 100% avance para la demo. Backlog = 0%.
+            const completed = tasks.filter(t => ['1q', 'desarrollo', 'qa', 'producción'].some(s => t.status?.toLowerCase().includes(s))).length;
+            return {
+                real: Math.round((completed / tasks.length) * 100),
+                target: 85 // Target estático para ejemplo ejecutivo
+            };
+        }
+
+        function getPilarColor(pilarName) {
+            if(pilarName.includes('Oferta')) return 'bg-amber';
+            if(pilarName.includes('Acceso') || pilarName.includes('Experiencia')) return 'bg-emerald';
+            return 'bg-purple';
+        }
+
+        function renderResumen() {
+            const container = document.getElementById('resumen-container');
+            const totalProgress = calculateProgress(appState.filteredData);
+            
+            // Agrupar por Pilar usando la data filtrada
+            const pilarGroups = {};
+            appState.filteredData.forEach(item => {
+                if(!pilarGroups[item.pilar]) pilarGroups[item.pilar] = [];
+                pilarGroups[item.pilar].push(item);
+            });
+
+            let html = `
+                <div class="card">
+                    <h2 class="card-title" style="font-size: 1.25rem;">Avance Global del Portafolio</h2>
+                    <div class="bullet-container" style="margin-bottom: 0;">
+                        <div class="bullet-labels">
+                            <span style="color: var(--slate-500);">Progreso Real vs Esperado</span>
+                            <span><strong style="color: var(--blue-600);">${totalProgress.real}%</strong> / ${totalProgress.target}%</span>
+                        </div>
+                        <div class="bullet-track" style="height: 32px;">
+                            <div class="bullet-real bg-blue" style="width: ${totalProgress.real}%;"></div>
+                            <div class="bullet-target" style="left: ${totalProgress.target}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            for (const [pilarName, tasks] of Object.entries(pilarGroups)) {
+                const prog = calculateProgress(tasks);
+                const colorClass = getPilarColor(pilarName);
+                
+                html += `
+                <div class="card">
+                    <h2 class="card-title">${pilarName}</h2>
+                    <div class="bullet-container" style="margin:0;">
+                        <div class="bullet-labels">
+                            <span>Avance de Iniciativas</span>
+                            <span><strong>${prog.real}%</strong> / ${prog.target}%</span>
+                        </div>
+                        <div class="bullet-track">
+                            <div class="bullet-real ${colorClass}" style="width: ${prog.real}%;"></div>
+                            <div class="bullet-target" style="left: ${prog.target}%;"></div>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function renderRoadmap() {
+            const container = document.getElementById('roadmap-container');
+            let html = `
+                <div class="gantt-header" style="grid-column: 1; grid-row: 1 / 3; display:flex; align-items:center; text-align:left;">Proyecto / Hito Operativo</div>
+                <div class="gantt-header" style="grid-column: 2 / 6;">Octubre</div>
+                <div class="gantt-header" style="grid-column: 6 / 10;">Noviembre</div>
+                <div class="gantt-header" style="grid-column: 10 / 14;">Diciembre</div>
+            `;
+
+            for(let i=1; i<=12; i++) {
+                html += `<div class="gantt-header" style="grid-column: ${i+1}; font-size:0.7rem; color:var(--slate-500); border-top: 1px solid var(--slate-200);">S${((i-1)%4)+1}</div>`;
+            }
+
+            // Usamos la data filtrada para pintar el Gantt
+            appState.filteredData.forEach((item, pIdx) => {
+                const colorClass = getPilarColor(item.pilar);
+                const tareas = appState.tareas[item.proyecto] || [];
+                
+                // Fila del Proyecto Padre (Interactiva para colapsar/expandir)
+                html += `
+                <div class="gantt-row">
+                    <div class="gantt-title" title="${item.iniciativa}" onclick="toggleGanttTasks(${pIdx})" style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
+                        <span id="icon-gantt-${pIdx}" style="font-size: 0.6rem; color: var(--slate-500); transition: transform 0.2s;">▼</span> 
+                        <strong>${item.proyecto}</strong>
+                    </div>
+                    <div class="gantt-track" style="background: var(--slate-50);"></div>
+                </div>`;
+                
+                // Contenedor de las tareas hijas
+                html += `<div id="gantt-tasks-${pIdx}" style="display: contents;">`;
+                
+                // Filas de los Hitos (Tareas) sincronizadas con fechas
+                tareas.forEach(tarea => {
+                    const start = new Date(tarea.fechaInicio);
+                    const end = new Date(tarea.fechaFin);
+                    // Calculo base Q4 (Octubre 1ro)
+                    const q4Start = new Date(start.getFullYear(), 9, 1); 
+                    
+                    let colStart = 1; let colSpan = 2; // Default
+                    
+                    if(!isNaN(start) && !isNaN(end)) {
+                        const daysStart = (start - q4Start) / (1000 * 60 * 60 * 24);
+                        const daysEnd = (end - q4Start) / (1000 * 60 * 60 * 24);
+                        colStart = Math.max(1, Math.floor(daysStart / 7) + 1);
+                        const colEnd = Math.min(13, Math.ceil(daysEnd / 7) + 1);
+                        colSpan = Math.max(1, colEnd - colStart);
+                    }
+                    
+                    html += `
+                    <div class="gantt-row">
+                        <div class="gantt-task-title">↳ ${tarea.nombre}</div>
+                        <div class="gantt-track">
+                            <div class="gantt-bar ${colorClass}" style="grid-column: ${colStart} / span ${colSpan};" title="${tarea.fechaInicio} - ${tarea.fechaFin} | Resp: ${tarea.responsable}">
+                                ${tarea.estado}
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                
+                html += `</div>`; // Cierra el contenedor de tareas
+            });
+            container.innerHTML = html;
+        }
+
+        function toggleGanttTasks(index) {
+            const container = document.getElementById(`gantt-tasks-${index}`);
+            const icon = document.getElementById(`icon-gantt-${index}`);
+            
+            if (container.style.display === 'contents' || container.style.display === '') {
+                // Colapsar
+                container.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            } else {
+                // Expandir
+                container.style.display = 'contents';
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function renderProyectos() {
+            const container = document.getElementById('proyectos-container');
+            let html = '';
+
+            // Re-agrupar data basada en la lista global filtrada
+            const grouped = {};
+            appState.filteredData.forEach(item => {
+                if (!grouped[item.pilar]) grouped[item.pilar] = {};
+                if (!grouped[item.pilar][item.iniciativa]) grouped[item.pilar][item.iniciativa] = [];
+                grouped[item.pilar][item.iniciativa].push(item);
+            });
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--slate-500); background: white; border-radius: var(--radius-lg); border: 1px dashed var(--slate-300);">No se encontraron proyectos con los filtros aplicados.</div>';
+                return;
+            }
+
+            for (const [pilar, iniciativas] of Object.entries(grouped)) {
+                html += `<h2 style="font-size: 1.25rem; font-weight: 700; color: var(--slate-800); margin: 24px 0 16px; border-bottom: 2px solid var(--slate-200); padding-bottom: 8px;">Pilar: ${pilar}</h2>`;
+                
+                for (const [iniciativa, proyectos] of Object.entries(iniciativas)) {
+                    let tableRows = proyectos.map(proj => `
+                        <tr>
+                            <td style="font-weight: 500;">${proj.proyecto}</td>
+                            <td><span class="status-badge">${proj.canal}</span></td>
+                            <td>${proj.prioridad}</td>
+                            <td><span class="status-badge bg-slate-200" style="background:#e2e8f0;">${proj.status || 'Backlog'}</span></td>
+                        </tr>
+                    `).join('');
+
+                    html += `
+                    <div class="project-card">
+                        <div class="project-card-header">
+                            <div>
+                                <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--slate-900);">Iniciativa: ${iniciativa}</h3>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr><th>Proyecto</th><th>Canal</th><th>Prioridad</th><th>Status General</th></tr>
+                                </thead>
+                                <tbody>${tableRows}</tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        // BACKLOG DE TAREAS / HITOS
+        function renderBacklogTasks() {
+            const container = document.getElementById('tasks-container');
+            const selectedProject = document.getElementById('project-selector').value;
+            
+            if(!selectedProject) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--slate-500);">Selecciona un proyecto arriba para ver o agregar sus hitos.</div>';
+                return;
+            }
+
+            const tareas = appState.tareas[selectedProject] || [];
+            
+            if(tareas.length === 0) {
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--slate-500); background: white; border-radius: var(--radius-lg); border: 1px dashed var(--slate-300);">El proyecto <strong>${selectedProject}</strong> no tiene hitos aún. Usa el botón superior para agregar uno.</div>`;
+                return;
+            }
+
+            let tableRows = tareas.map((t, index) => `
+                <tr>
+                    <td style="font-weight: 500;">${t.nombre}</td>
+                    <td>${t.responsable}</td>
+                    <td style="font-size:0.75rem; color:var(--slate-500);">${t.fechaInicio}<br>a ${t.fechaFin}</td>
+                    <td>
+                        <select onchange="actualizarEstadoTarea('${selectedProject}', ${index}, this.value)" style="padding: 4px; border: 1px solid var(--slate-300); border-radius: 4px; font-size: 0.8rem;">
+                            <option ${t.estado === 'Backlog' ? 'selected' : ''}>Backlog</option>
+                            <option ${t.estado === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
+                            <option ${t.estado === 'Completado' ? 'selected' : ''}>Completado</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="project-card">
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr><th>Hito / Acción Operativa</th><th>Responsable</th><th>Fechas</th><th>Estado (Inline)</th></tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openTaskModal() {
+            if(!document.getElementById('project-selector').value) {
+                alert("Por favor selecciona un proyecto primero.");
+                return;
+            }
+            document.getElementById('taskModalOverlay').style.display = 'flex';
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModalOverlay').style.display = 'none';
+        }
+
+        function saveTask() {
+            const project = document.getElementById('project-selector').value;
+            const nombre = document.getElementById('task-name').value;
+            const responsable = document.getElementById('task-assignee').value;
+            const fechaInicio = document.getElementById('task-start').value;
+            const fechaFin = document.getElementById('task-end').value;
+            const estado = document.getElementById('task-status').value;
+            
+            if(new Date(fechaInicio) > new Date(fechaFin)) {
+                alert("La fecha de fin no puede ser menor a la fecha de inicio.");
+                return;
+            }
+            
+            appState.tareas[project].push({ nombre, responsable, fechaInicio, fechaFin, estado });
+            
+            closeTaskModal();
+            renderBacklogTasks();
+            renderRoadmap(); // Actualiza el Gantt inmediatamente
+            showToast("Hito agregado y sincronizado al Roadmap");
+        }
+
+        function actualizarEstadoTarea(project, index, nuevoEstado) {
+            appState.tareas[project][index].estado = nuevoEstado;
+            showToast("Estado actualizado");
+        }
+
+        // NAVEGACIÓN
+        function switchView(viewId, title, subtitle) {
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById('header-title').innerText = title;
+            document.getElementById('header-subtitle').innerText = subtitle;
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
     </script>
 </body>
 </html>
