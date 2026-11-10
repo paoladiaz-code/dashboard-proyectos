@@ -89,6 +89,17 @@
         .gantt-bar { height: 20px; border-radius: 4px; color: white; display: flex; align-items: center; padding: 0 8px; font-size: 0.7rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: var(--shadow-sm); cursor: pointer; transition: transform 0.2s;}
         .gantt-bar:hover { transform: scaleY(1.1); }
         
+        /* COMPONENTE MULTI-SELECT VANILLA */
+        .multi-select-container { position: relative; display: inline-block; flex: 1; min-width: 150px; }
+        .multi-select-label { font-size: 0.75rem; font-weight: 600; color: var(--slate-500); text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .multi-select-btn { width: 100%; text-align: left; padding: 8px 12px; background: white; border: 1px solid var(--slate-300); border-radius: var(--radius-md); cursor: pointer; font-size: 0.85rem; color: var(--slate-700); display: flex; justify-content: space-between; align-items: center; }
+        .multi-select-btn:hover { background: var(--slate-50); }
+        .multi-select-options { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--slate-300); border-radius: var(--radius-md); margin-top: 4px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: var(--shadow-md); }
+        .multi-select-options.active { display: block; }
+        .multi-select-options label { display: flex; align-items: center; padding: 8px 12px; cursor: pointer; font-size: 0.85rem; margin: 0; text-transform: none; color: var(--slate-700); font-weight: 400; }
+        .multi-select-options label:hover { background: var(--slate-50); }
+        .multi-select-options input[type="checkbox"] { margin-right: 8px; cursor: pointer; }
+
         .loader-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; gap:10px; }
         .spinner { border: 4px solid var(--slate-200); border-top: 4px solid var(--blue-600); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -147,29 +158,33 @@
             
             <!-- GLOBAL FILTERS (Movido aquí para afectar a todas las vistas) -->
             <div class="filter-bar">
-                <div class="filter-group">
-                    <label>Pilar Estratégico</label>
-                    <select id="filter-pilar" onchange="applyFilters()">
-                        <option value="">Todos</option>
-                    </select>
+                <div class="multi-select-container" id="dropdown-pilar">
+                    <span class="multi-select-label">Pilar Estratégico</span>
+                    <button class="multi-select-btn" onclick="toggleDropdown('pilar')">
+                        <span class="selected-text">Todos</span> ▼
+                    </button>
+                    <div class="multi-select-options" id="options-pilar"></div>
                 </div>
-                <div class="filter-group">
-                    <label>Iniciativa</label>
-                    <select id="filter-iniciativa" onchange="applyFilters()">
-                        <option value="">Todas</option>
-                    </select>
+                <div class="multi-select-container" id="dropdown-iniciativa">
+                    <span class="multi-select-label">Iniciativa</span>
+                    <button class="multi-select-btn" onclick="toggleDropdown('iniciativa')">
+                        <span class="selected-text">Todas</span> ▼
+                    </button>
+                    <div class="multi-select-options" id="options-iniciativa"></div>
                 </div>
-                <div class="filter-group">
-                    <label>Status General</label>
-                    <select id="filter-status" onchange="applyFilters()">
-                        <option value="">Todos</option>
-                    </select>
+                <div class="multi-select-container" id="dropdown-status">
+                    <span class="multi-select-label">Status General</span>
+                    <button class="multi-select-btn" onclick="toggleDropdown('status')">
+                        <span class="selected-text">Todos</span> ▼
+                    </button>
+                    <div class="multi-select-options" id="options-status"></div>
                 </div>
-                <div class="filter-group">
-                    <label>Canal</label>
-                    <select id="filter-canal" onchange="applyFilters()">
-                        <option value="">Todos</option>
-                    </select>
+                <div class="multi-select-container" id="dropdown-canal">
+                    <span class="multi-select-label">Canal</span>
+                    <button class="multi-select-btn" onclick="toggleDropdown('canal')">
+                        <span class="selected-text">Todos</span> ▼
+                    </button>
+                    <div class="multi-select-options" id="options-canal"></div>
                 </div>
                 <div class="filter-group">
                     <label>Buscar Proyecto</label>
@@ -268,7 +283,8 @@
             data: [], // Lista de Proyectos desde Sheets
             filteredData: [], // Nueva lista para mantener los datos filtrados globalmente
             proyectosAgrupados: {}, // Jerarquía Pilar > Iniciativa > Proyecto
-            tareas: {} // Memoria local para Backlogs de cada proyecto: { "NombreProyecto": [{hito, status}] }
+            tareas: {}, // Memoria local para Backlogs de cada proyecto: { "NombreProyecto": [{hito, status}] }
+            activeFilters: { pilar: [], iniciativa: [], status: [], canal: [] } // Estado de multiselección
         };
 
         // DATOS DE RESPALDO
@@ -354,52 +370,82 @@
             }
         }
 
-        // FUNCIONES DE FILTRO
-        function populateFilters() {
-            const pilares = new Set();
-            const iniciativas = new Set();
-            const statuses = new Set();
-            const canales = new Set();
-
-            appState.data.forEach(item => {
-                if (item.pilar) pilares.add(item.pilar);
-                if (item.iniciativa) iniciativas.add(item.iniciativa);
-                if (item.status) statuses.add(item.status);
-                if (item.canal && item.canal !== '-') canales.add(item.canal);
+        // FUNCIONES DE MULTISELECCIÓN Y FILTRO
+        function toggleDropdown(filterType) {
+            const dropdown = document.getElementById(`options-${filterType}`);
+            // Cerrar otros dropdowns
+            document.querySelectorAll('.multi-select-options').forEach(el => {
+                if(el.id !== `options-${filterType}`) el.classList.remove('active');
             });
+            dropdown.classList.toggle('active');
+            event.stopPropagation(); // Evitar que el clic cierre el dropdown inmediatamente
+        }
 
-            const pilarSelect = document.getElementById('filter-pilar');
-            pilarSelect.innerHTML = '<option value="">Todos</option>';
-            pilares.forEach(p => pilarSelect.innerHTML += `<option value="${p}">${p}</option>`);
+        // Cerrar al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.multi-select-container')) {
+                document.querySelectorAll('.multi-select-options').forEach(el => el.classList.remove('active'));
+            }
+        });
 
-            const initSelect = document.getElementById('filter-iniciativa');
-            initSelect.innerHTML = '<option value="">Todas</option>';
-            iniciativas.forEach(i => initSelect.innerHTML += `<option value="${i}">${i}</option>`);
+        function populateFilters() {
+            const pilares = [...new Set(appState.data.map(d => d.pilar).filter(Boolean))];
+            const iniciativas = [...new Set(appState.data.map(d => d.iniciativa).filter(Boolean))];
+            const statuses = [...new Set(appState.data.map(d => d.status).filter(Boolean))];
+            const canales = [...new Set(appState.data.map(d => d.canal).filter(c => c && c !== '-'))];
 
-            const statusSelect = document.getElementById('filter-status');
-            statusSelect.innerHTML = '<option value="">Todos</option>';
-            statuses.forEach(s => statusSelect.innerHTML += `<option value="${s}">${s}</option>`);
+            renderCheckboxes('pilar', pilares);
+            renderCheckboxes('iniciativa', iniciativas);
+            renderCheckboxes('status', statuses);
+            renderCheckboxes('canal', canales);
+        }
 
-            const canalSelect = document.getElementById('filter-canal');
-            canalSelect.innerHTML = '<option value="">Todos</option>';
-            canales.forEach(c => canalSelect.innerHTML += `<option value="${c}">${c}</option>`);
+        function renderCheckboxes(filterType, uniqueValues) {
+            const container = document.getElementById(`options-${filterType}`);
+            container.innerHTML = '';
+            uniqueValues.forEach(value => {
+                const label = document.createElement('label');
+                label.innerHTML = `<input type="checkbox" value="${value}" onchange="handleCheckboxChange('${filterType}')"> ${value}`;
+                container.appendChild(label);
+            });
+        }
+
+        function handleCheckboxChange(filterType) {
+            const container = document.getElementById(`options-${filterType}`);
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
+            
+            // Actualizar el estado global con las selecciones
+            appState.activeFilters[filterType] = Array.from(checkboxes).map(cb => cb.value);
+
+            // Modificar el texto del botón
+            const btnText = document.querySelector(`#dropdown-${filterType} .selected-text`);
+            if (appState.activeFilters[filterType].length === 0) {
+                btnText.innerText = filterType === 'iniciativa' ? 'Todas' : 'Todos';
+            } else if (appState.activeFilters[filterType].length === 1) {
+                let text = appState.activeFilters[filterType][0];
+                btnText.innerText = text.length > 15 ? text.substring(0, 15) + '...' : text;
+            } else {
+                btnText.innerText = `${appState.activeFilters[filterType].length} seleccionados`;
+            }
+            
+            applyFilters();
         }
 
         function applyFilters() {
-            const filterPilar = document.getElementById('filter-pilar').value;
-            const filterIniciativa = document.getElementById('filter-iniciativa').value;
-            const filterStatus = document.getElementById('filter-status').value;
-            const filterCanal = document.getElementById('filter-canal').value;
             const filterSearch = document.getElementById('filter-search').value.toLowerCase();
             
-            // Actualizamos la fuente de datos global filtrada
             appState.filteredData = appState.data.filter(item => {
                 let match = true;
-                if (filterPilar && item.pilar !== filterPilar) match = false;
-                if (filterIniciativa && item.iniciativa !== filterIniciativa) match = false;
-                if (filterStatus && item.status !== filterStatus) match = false;
-                if (filterCanal && item.canal !== filterCanal) match = false;
+                
+                // Lógica de Multiselección (Array contains)
+                if (appState.activeFilters.pilar.length > 0 && !appState.activeFilters.pilar.includes(item.pilar)) match = false;
+                if (appState.activeFilters.iniciativa.length > 0 && !appState.activeFilters.iniciativa.includes(item.iniciativa)) match = false;
+                if (appState.activeFilters.status.length > 0 && !appState.activeFilters.status.includes(item.status)) match = false;
+                if (appState.activeFilters.canal.length > 0 && !appState.activeFilters.canal.includes(item.canal)) match = false;
+                
+                // Búsqueda de texto
                 if (filterSearch && (!item.proyecto || !item.proyecto.toLowerCase().includes(filterSearch))) match = false;
+                
                 return match;
             });
 
@@ -408,11 +454,21 @@
         }
 
         function resetFilters() {
-            document.getElementById('filter-pilar').value = '';
-            document.getElementById('filter-iniciativa').value = '';
-            document.getElementById('filter-status').value = '';
-            document.getElementById('filter-canal').value = '';
+            // Vaciar arreglos
+            appState.activeFilters = { pilar: [], iniciativa: [], status: [], canal: [] };
+            
+            // Desmarcar checkboxes visualmente
+            document.querySelectorAll('.multi-select-options input[type="checkbox"]').forEach(cb => cb.checked = false);
+            
+            // Reiniciar textos
+            document.querySelector('#dropdown-pilar .selected-text').innerText = 'Todos';
+            document.querySelector('#dropdown-iniciativa .selected-text').innerText = 'Todas';
+            document.querySelector('#dropdown-status .selected-text').innerText = 'Todos';
+            document.querySelector('#dropdown-canal .selected-text').innerText = 'Todos';
+            
+            // Limpiar buscador
             document.getElementById('filter-search').value = '';
+            
             applyFilters();
         }
 
