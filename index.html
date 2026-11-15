@@ -469,11 +469,49 @@
             }
         }
 
+        // AUTO-PLANTILLA PARA PROYECTOS DIGITALES
+        function applyDigitalTemplate() {
+            const hitosDigitales = [
+                "Análisis inicial", "FHU inicial de Unidad", "FHU cerrado (con Proyectos)", 
+                "Diseño", "Aplicar flujos (operativos, administrativos)", "Preparar data/reportes", 
+                "Pruebas UAT", "Pruebas preproducción", "Pase a producción", "Lanzamiento comunicacional"
+            ];
+            
+            let modified = false;
+            
+            appState.data.forEach(item => {
+                // Si el proyecto es Digital y su backlog está vacío
+                if (item.canales && item.canales.includes("Digital")) {
+                    if (!appState.tareas[item.proyecto] || appState.tareas[item.proyecto].length === 0) {
+                        appState.tareas[item.proyecto] = hitosDigitales.map((hito, idx) => {
+                            // Espaciar las fechas 1 semana por hito a partir del 23 de Noviembre 2026
+                            let startDate = new Date(2026, 10, 23); // 23 Nov 2026
+                            startDate.setDate(startDate.getDate() + (idx * 7));
+                            let endDate = new Date(startDate);
+                            endDate.setDate(endDate.getDate() + 5); // 5 días de trabajo por hito
+                            
+                            return {
+                                nombre: hito,
+                                responsable: "Digital",
+                                fechaInicio: startDate.toISOString().split('T')[0],
+                                fechaFin: endDate.toISOString().split('T')[0],
+                                estado: "Backlog"
+                            };
+                        });
+                        modified = true;
+                    }
+                }
+            });
+            
+            if (modified) saveLocalData();
+        }
+
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', async () => {
             await fetchGoogleSheetData();
             processDataStructure();
             loadLocalData(); // Cargar datos guardados antes de renderizar
+            applyDigitalTemplate(); // Inyectar plantilla digital si hay proyectos vacíos
             renderAllViews();
             document.getElementById('loader').style.display = 'none';
         });
@@ -663,6 +701,7 @@
             await fetchGoogleSheetData();
             processDataStructure();
             loadLocalData(); // Recargar la data local después de traer la de Sheets
+            applyDigitalTemplate(); // Aplicar plantilla a proyectos nuevos que hayan entrado de Sheets
             renderAllViews();
             
             document.getElementById('loader').style.display = 'none';
