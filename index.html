@@ -261,6 +261,11 @@
             <!-- VIEW 1: RESUMEN -->
             <section id="view-resumen" class="view-section active">
                 <div id="resumen-container">
+                    <!-- NUEVO: Tarjetas de KPI Ejecutivo -->
+                    <div id="resumen-kpi-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
+                        <!-- Se inyectarán por JS -->
+                    </div>
+
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--slate-100); margin-bottom: 16px; padding-bottom: 12px;">
                             <h2 class="card-title" style="border: none; margin: 0; padding: 0;">Avance del Portafolio</h2>
@@ -731,11 +736,63 @@
             const container = document.getElementById('resumen-kpis-content');
             const selectElement = document.getElementById('resumen-agrupacion');
             const agrupacion = selectElement ? selectElement.value : 'pilar';
+            const kpiContainer = document.getElementById('resumen-kpi-cards');
             
             if(appState.filteredData.length === 0) {
+                if(kpiContainer) kpiContainer.innerHTML = '';
                 container.innerHTML = '<p style="color:var(--slate-500);">No hay datos para mostrar con los filtros actuales.</p>';
                 return;
             }
+
+            const today = new Date(); // Fecha actual real para cálculos
+            today.setHours(0, 0, 0, 0); // Normalizar a medianoche
+
+            // --- CÁLCULO DE KPIS EJECUTIVOS (Tarjetas Superiores) ---
+            let kpiAvanzado = 0;
+            let kpiPendientes = 0;
+            let kpiAlertas = 0;
+
+            appState.filteredData.forEach(proj => {
+                const tareas = appState.tareas[proj.proyecto] || [];
+                tareas.forEach(t => {
+                    if (t.estado === 'Completado') {
+                        kpiAvanzado++;
+                    } else {
+                        const end = new Date(t.fechaFin);
+                        if (!isNaN(end)) {
+                            end.setHours(0, 0, 0, 0); 
+                            end.setDate(end.getDate() + 1); // Corrección zona horaria
+                        }
+                        
+                        if (!isNaN(end) && today > end) {
+                            kpiAlertas++; // Vencido y no completado
+                        } else {
+                            kpiPendientes++; // En tiempo (Backlog o En progreso)
+                        }
+                    }
+                });
+            });
+
+            if(kpiContainer) {
+                kpiContainer.innerHTML = `
+                    <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--emerald-500); padding: 20px;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px;">Hitos Completados</div>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--slate-800); margin-top: 8px; line-height: 1;">${kpiAvanzado}</div>
+                        <div style="font-size: 0.8rem; color: var(--emerald-500); font-weight: 600; margin-top: 6px;">Logrados con éxito</div>
+                    </div>
+                    <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--blue-500); padding: 20px;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px;">Hitos Pendientes</div>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--slate-800); margin-top: 8px; line-height: 1;">${kpiPendientes}</div>
+                        <div style="font-size: 0.8rem; color: var(--blue-500); font-weight: 600; margin-top: 6px;">En curso o Backlog (En tiempo)</div>
+                    </div>
+                    <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--red-500); padding: 20px;">
+                        <div style="font-size: 0.85rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; letter-spacing: 0.5px;">Alertas (Vencidos)</div>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--slate-800); margin-top: 8px; line-height: 1;">${kpiAlertas}</div>
+                        <div style="font-size: 0.8rem; color: var(--red-500); font-weight: 600; margin-top: 6px;">${kpiAlertas > 0 ? '⚠️ Requieren atención inmediata' : 'Todo al día'}</div>
+                    </div>
+                `;
+            }
+            // --- FIN CÁLCULO KPIS ---
 
             let groups = {};
             
@@ -767,15 +824,49 @@
             let html = '';
             
             for (const [groupName, items] of Object.entries(groups)) {
-                // Cálculo de avance: proyectos que no están en backlog sobre el total
-                const countEnDesarrollo = items.filter(d => d.status && d.status.toLowerCase() !== 'backlog').length;
-                const total = items.length;
-                const porcentajeReal = total > 0 ? Math.round((countEnDesarrollo/total)*100) : 0;
+                let totalTasks = 0;
+                let scoreReal = 0;
+                let scoreEsperado = 0;
+
+                items.forEach(proj => {
+                    const tareas = appState.tareas[proj.proyecto] || [];
+                    totalTasks += tareas.length;
+                    
+                    tareas.forEach(t => {
+                        // Cálculo Real
+                        if (t.estado === 'Completado') scoreReal += 1;
+                        else if (t.estado === 'En Progreso') scoreReal += 0.5;
+                        
+                        // Cálculo Esperado (Basado en fechas precisas contra el día de hoy)
+                        if (t.fechaInicio && t.fechaFin) {
+                            const start = new Date(t.fechaInicio);
+                            const end = new Date(t.fechaFin);
+                            
+                            if (!isNaN(start) && !isNaN(end)) {
+                                start.setHours(0,0,0,0); start.setDate(start.getDate() + 1);
+                                end.setHours(0,0,0,0); end.setDate(end.getDate() + 1);
+
+                                if (today >= end) {
+                                    scoreEsperado += 1; 
+                                } else if (today > start && today < end) {
+                                    const totalDuration = end.getTime() - start.getTime();
+                                    const elapsed = today.getTime() - start.getTime();
+                                    scoreEsperado += (elapsed / totalDuration);
+                                }
+                            }
+                        }
+                    });
+                });
+
+                let porcentajeReal = totalTasks > 0 ? Math.round((scoreReal / totalTasks) * 100) : 0;
+                let porcentajeEsperado = totalTasks > 0 ? Math.round((scoreEsperado / totalTasks) * 100) : 0;
                 
-                // Simulación de meta (target) esperado (15% por delante)
-                const porcentajeEsperado = Math.min(100, porcentajeReal + 15);
-                
-                // Extraer el pilar del primer elemento para mantener los colores corporativos
+                // Fallback visual si el proyecto no tiene tareas cargadas aún
+                if(totalTasks === 0 && items.length > 0) {
+                    const countEnDesarrollo = items.filter(d => d.status && d.status.toLowerCase() !== 'backlog').length;
+                    porcentajeReal = Math.round((countEnDesarrollo / items.length) * 100);
+                }
+
                 const pilarRef = items.length > 0 ? items[0].pilar : '';
                 const colorClass = getPilarColor(pilarRef);
 
@@ -783,7 +874,7 @@
                     <div class="bullet-container">
                         <div class="bullet-labels">
                             <span>${groupName}</span>
-                            <span><span style="color: var(--slate-900);">${porcentajeReal}%</span> / ${porcentajeEsperado}%</span>
+                            <span><span style="color: var(--slate-900);">${porcentajeReal}% Real</span> / ${porcentajeEsperado}% Meta</span>
                         </div>
                         <div class="bullet-track">
                             <div class="bullet-real ${colorClass}" style="width: ${porcentajeReal}%;"></div>
