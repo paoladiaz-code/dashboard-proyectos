@@ -148,36 +148,57 @@
 </head>
 <body>
 
-    <div id="loader" class="loader-overlay">
+    <!-- PANTALLA DE LOGIN SEGURA -->
+    <div id="auth-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; justify-content: center; align-items: center; z-index: 99999;">
+        <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <div style="background: #5b21b6; width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <span style="color: white; font-size: 24px;">📊</span>
+            </div>
+            <h2 style="margin: 0 0 10px; color: #1e293b; font-family: sans-serif;">PMO Dashboard</h2>
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 25px; font-family: sans-serif;">Acceso restringido. Por favor, ingresa tu correo corporativo.</p>
+            
+            <input type="email" id="login-email" placeholder="admin@latinka.com.pe" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 20px; box-sizing: border-box; font-size: 14px;">
+            
+            <button id="login-btn" style="width: 100%; padding: 12px; background: #6d28d9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
+                Ingresar al Portafolio
+            </button>
+            
+            <p style="font-size: 11px; color: #94a3b8; margin-top: 20px;">Roles de prueba: <b>admin@</b> (Edición) o <b>lector@</b> (Solo lectura)</p>
+        </div>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loader" class="loader-overlay" style="display: none;">
         <div class="spinner"></div>
-        <p style="font-weight: 600; color: var(--slate-700);">Sincronizando con Google Sheets...</p>
+        <p style="color: var(--slate-700); font-weight: 600; font-size: 0.9rem; margin-top: 10px;">Sincronizando datos...</p>
     </div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2>PMO DASHBOARD</h2>
+            <h2 style="font-size: 1.25rem; font-weight: 700; letter-spacing: 0.5px;">ArquiDash PMO</h2>
+            <p style="font-size: 0.75rem; color: var(--slate-500); margin-top: 4px;">Data Driven Portfolio</p>
         </div>
         <nav class="nav-menu">
             <button class="nav-btn active" onclick="switchView('view-resumen', 'Resumen Ejecutivo', 'Progreso en tiempo real')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                 Resumen Ejecutivo
+            </button>
+            <button class="nav-btn" onclick="switchView('view-proyectos', 'Portafolio de Proyectos', 'Directorio General')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                Portafolio (Proyectos)
             </button>
             <button class="nav-btn" onclick="switchView('view-roadmap', 'Roadmap (Gantt)', 'Cronograma Estratégico')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                 Roadmap (Gantt)
             </button>
-            <button class="nav-btn" onclick="switchView('view-kanban', 'Tablero Kanban', 'Gestión Ágil de Tareas')">
+            <button class="nav-btn" onclick="switchView('view-kanban', 'Tablero Kanban', 'Estado Operativo')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg>
-                Tablero Kanban
+                Kanban Board
             </button>
-            <button class="nav-btn" onclick="switchView('view-calendar', 'Agenda de Vencimientos', 'Cronología de Entregas')">
+            <button class="nav-btn" onclick="switchView('view-calendar', 'Agenda', 'Próximos Vencimientos')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                Calendario / Agenda
-            </button>
-            <button class="nav-btn" onclick="switchView('view-proyectos', 'Portafolio (Tabla)', 'Proyectos por Pilar e Iniciativa')">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
-                Portafolio (Tabla)
+                Agenda (Vencimientos)
             </button>
             <button class="nav-btn" onclick="switchView('view-backlogs', 'Backlog de Tareas', 'Gestión de Hitos por Proyecto')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
@@ -214,7 +235,7 @@
 
         <div class="scroll-area">
             
-            <!-- GLOBAL FILTERS (Movido aquí para afectar a todas las vistas) -->
+            <!-- GLOBAL FILTERS -->
             <div class="filter-bar">
                 <div class="multi-select-container" id="dropdown-pilar">
                     <span class="multi-select-label">Pilar Estratégico</span>
@@ -261,9 +282,8 @@
             <!-- VIEW 1: RESUMEN -->
             <section id="view-resumen" class="view-section active">
                 <div id="resumen-container">
-                    <!-- NUEVO: Tarjetas de KPI Ejecutivo -->
+                    <!-- Tarjetas de KPI Ejecutivo -->
                     <div id="resumen-kpi-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
-                        <!-- Se inyectarán por JS -->
                     </div>
 
                     <div class="card">
@@ -283,41 +303,33 @@
 
             <!-- VIEW 2: ROADMAP -->
             <section id="view-roadmap" class="view-section">
-                <div id="roadmap-container">
-                    <!-- Dynamic Headers and Rows will be injected here -->
-                </div>
+                <div id="roadmap-container"></div>
             </section>
 
             <!-- VIEW 3: KANBAN -->
             <section id="view-kanban" class="view-section">
-                <div id="kanban-container" class="kanban-board">
-                    <!-- Columnas inyectadas por JS -->
-                </div>
+                <div id="kanban-container" class="kanban-board"></div>
             </section>
 
             <!-- VIEW 4: AGENDA / CALENDARIO -->
             <section id="view-calendar" class="view-section">
                 <div class="card">
                     <h2 class="card-title">Próximos Vencimientos</h2>
-                    <div id="agenda-container" class="agenda-list">
-                        <!-- Lista inyectada por JS -->
-                    </div>
+                    <div id="agenda-container" class="agenda-list"></div>
                 </div>
             </section>
 
             <!-- VIEW 5: PROYECTOS -->
             <section id="view-proyectos" class="view-section">
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
-                    <button class="btn-primary" onclick="openProjectModal()">+ Nuevo Proyecto</button>
+                    <button class="btn-primary" id="btn-nuevo-proyecto" onclick="openProjectModal()">+ Nuevo Proyecto</button>
                 </div>
                 <div id="proyectos-container"></div>
             </section>
 
             <!-- VIEW 6: BACKLOGS -->
             <section id="view-backlogs" class="view-section">
-                <div id="tasks-container">
-                    <!-- Las tarjetas de proyecto y sus tareas se inyectarán aquí -->
-                </div>
+                <div id="tasks-container"></div>
             </section>
         </div>
     </main>
@@ -422,50 +434,43 @@
     <script>
         // ESTADO GLOBAL DE LA APP
         const appState = {
-            data: [], // Lista de Proyectos desde Sheets
-            filteredData: [], // Nueva lista para mantener los datos filtrados globalmente
-            proyectosAgrupados: {}, // Jerarquía Pilar > Iniciativa > Proyecto
-            tareas: {}, // Memoria local para Backlogs de cada proyecto: { "NombreProyecto": [{hito, status}] }
-            activeFilters: { pilar: [], iniciativa: [], status: [], canal: [], prioridad: [] }, // Estado de multiselección
-            editingTaskIndex: null, // Para saber qué tarea estamos editando
-            currentProjectForModal: null, // Para saber a qué proyecto agregar la tarea
-            ganttViewMode: 'weeks', // 'weeks' o 'months'
-            editingProjectData: null // Guardar ref al proyecto que estamos editando
+            data: [], 
+            filteredData: [], 
+            proyectosAgrupados: {}, 
+            tareas: {}, 
+            activeFilters: { pilar: [], iniciativa: [], status: [], canal: [], prioridad: [] }, 
+            editingTaskIndex: null, 
+            currentProjectForModal: null, 
+            ganttViewMode: 'weeks', 
+            editingProjectData: null, 
+            currentUser: null 
         };
 
-        // DATOS DE RESPALDO
         const fallbackData = [
             { pilar: "Ganar con una oferta comercial más competitiva", iniciativa: "Mejora de propuesta de valor", proyecto: "Optimizar matriz de premios: Tinka", canales: ["Todos"], prioridad: "Muy Alta", status: "1Q" },
             { pilar: "Ganar con una oferta comercial más competitiva", iniciativa: "Mayor innovación de Portafolio", proyecto: "Lanzamiento de raspes digitales para retail", canales: ["Operado", "Agente"], prioridad: "Baja", status: "Backlog" },
             { pilar: "Mayor acceso, mejor experiencia", iniciativa: "Aumentar acceso al juego", proyecto: "Suscripción para Kábala y Ganadiario", canales: ["Digital"], prioridad: "Alta", status: "1Q" }
         ];
 
-        // PERSISTENCIA DE DATOS (LOCAL STORAGE)
         function saveLocalData() {
-            // Guardar tareas/hitos
             localStorage.setItem('pmo_tareas_v1', JSON.stringify(appState.tareas));
-            // Guardar proyectos creados manualmente (que no vienen de Google Sheets)
             const localProjects = appState.data.filter(p => p.isLocal);
             localStorage.setItem('pmo_proyectos_locales_v1', JSON.stringify(localProjects));
         }
 
         function loadLocalData() {
-            // Cargar tareas
             const savedTasks = localStorage.getItem('pmo_tareas_v1');
             if (savedTasks) {
                 const parsedTasks = JSON.parse(savedTasks);
-                // Fusionar tareas locales con la estructura base
                 for (const [project, tasks] of Object.entries(parsedTasks)) {
                     if (!appState.tareas[project]) appState.tareas[project] = [];
                     appState.tareas[project] = tasks;
                 }
             }
             
-            // Cargar proyectos locales
             const savedProjects = localStorage.getItem('pmo_proyectos_locales_v1');
             if (savedProjects) {
                 const localProjs = JSON.parse(savedProjects);
-                // Evitar duplicados y agregar al inicio
                 localProjs.reverse().forEach(lp => {
                     if(!appState.data.find(d => d.proyecto === lp.proyecto)) {
                         appState.data.unshift(lp);
@@ -474,7 +479,6 @@
             }
         }
 
-        // AUTO-PLANTILLA PARA PROYECTOS DIGITALES
         function applyDigitalTemplate() {
             const hitosDigitales = [
                 "Análisis inicial", "FHU inicial de Unidad", "FHU cerrado (con Proyectos)", 
@@ -485,15 +489,13 @@
             let modified = false;
             
             appState.data.forEach(item => {
-                // Si el proyecto es Digital y su backlog está vacío
                 if (item.canales && item.canales.includes("Digital")) {
                     if (!appState.tareas[item.proyecto] || appState.tareas[item.proyecto].length === 0) {
                         appState.tareas[item.proyecto] = hitosDigitales.map((hito, idx) => {
-                            // Espaciar las fechas 1 semana por hito a partir del 23 de Noviembre 2026
-                            let startDate = new Date(2026, 10, 23); // 23 Nov 2026
+                            let startDate = new Date(2026, 10, 23); 
                             startDate.setDate(startDate.getDate() + (idx * 7));
                             let endDate = new Date(startDate);
-                            endDate.setDate(endDate.getDate() + 5); // 5 días de trabajo por hito
+                            endDate.setDate(endDate.getDate() + 5); 
                             
                             return {
                                 nombre: hito,
@@ -507,21 +509,64 @@
                     }
                 }
             });
-            
             if (modified) saveLocalData();
         }
 
-        // INICIALIZACIÓN
-        document.addEventListener('DOMContentLoaded', async () => {
-            await fetchGoogleSheetData();
-            processDataStructure();
-            loadLocalData(); // Cargar datos guardados antes de renderizar
-            applyDigitalTemplate(); // Inyectar plantilla digital si hay proyectos vacíos
-            renderAllViews();
+        document.addEventListener('DOMContentLoaded', () => {
+            const authOverlay = document.getElementById('auth-overlay');
+            const loginBtn = document.getElementById('login-btn');
+            const emailInput = document.getElementById('login-email');
+            
             document.getElementById('loader').style.display = 'none';
+
+            function procesarLogin() {
+                const email = emailInput.value.trim().toLowerCase();
+                if (email.endsWith('@latinka.com.pe')) {
+                    const userRole = (email.startsWith('admin') || email.startsWith('editor')) ? 'admin' : 'lector';
+                    localStorage.setItem('pmo_user_role', userRole);
+                    authOverlay.style.display = 'none';
+                    aplicarRolesUI(userRole);
+                    iniciarDashboard(); 
+                } else {
+                    alert('Acceso denegado. Debes utilizar una cuenta corporativa válida (@latinka.com.pe).');
+                }
+            }
+
+            if(loginBtn) loginBtn.addEventListener('click', procesarLogin);
+            if(emailInput) emailInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') procesarLogin(); });
         });
 
-        // FETCH DATA
+        function aplicarRolesUI(role) {
+            appState.currentUser = { role: role };
+            if (role === 'lector') {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    .btn-primary { display: none !important; } 
+                    .btn-icon { display: none !important; } 
+                    td select, .kanban-card select { pointer-events: none; border: none; background: transparent; -webkit-appearance: none; appearance: none; font-weight: 700; }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        async function iniciarDashboard() {
+            const loader = document.getElementById('loader');
+            try {
+                loader.style.display = 'flex';
+                await fetchGoogleSheetData();
+                processDataStructure();
+                loadLocalData(); 
+                applyDigitalTemplate(); 
+                renderAllViews();
+            } catch (error) {
+                console.error("Error crítico al renderizar el dashboard:", error);
+            } finally {
+                setTimeout(() => { 
+                    loader.style.display = 'none'; 
+                }, 300);
+            }
+        }
+
         async function fetchGoogleSheetData() {
             const sheetId = '1lXvceKy-lpRsoQ8KpNVTifewwMrqYEePz-055XdTu6M';
             const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
@@ -529,11 +574,9 @@
             try {
                 const response = await fetch(url);
                 const text = await response.text();
-                // Extract JSON from Gviz response
                 const jsonStr = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const json = JSON.parse(jsonStr);
                 
-                // Función para mapear y agrupar canales desde texto plano
                 const mapCanales = (rawStr) => {
                     if(!rawStr || rawStr === '-') return ['Todos'];
                     let str = rawStr.toLowerCase();
@@ -547,7 +590,6 @@
                     return Array.from(results);
                 };
                 
-                // Mapear Columnas (Ignorando la fila 0 que contiene las cabeceras con slice(1))
                 appState.data = json.table.rows.slice(1).map(row => {
                     return {
                         pilar: row.c[0] ? row.c[0].v : 'Sin Pilar',
@@ -559,41 +601,30 @@
                     };
                 }).filter(row => row.proyecto !== 'Sin Nombre'); 
 
-                console.log("Datos de Google Sheets cargados con éxito!");
-
             } catch (error) {
                 console.warn("Fallo lectura de Sheets (posible CORS). Usando Fallback Data local.");
                 appState.data = fallbackData;
             }
         }
 
-        // PROCESAR DATOS
         function processDataStructure() {
             appState.proyectosAgrupados = {};
-            appState.filteredData = [...appState.data]; // Por defecto, mostramos todos
-            
+            appState.filteredData = [...appState.data];
             appState.data.forEach(item => {
-                // Inicializar arreglo de tareas vacío si no existe
-                if(!appState.tareas[item.proyecto]) {
-                    appState.tareas[item.proyecto] = [];
-                }
+                if(!appState.tareas[item.proyecto]) appState.tareas[item.proyecto] = [];
             });
-            
             populateFilters();
         }
 
-        // FUNCIONES DE MULTISELECCIÓN Y FILTRO
         function toggleDropdown(filterType) {
             const dropdown = document.getElementById(`options-${filterType}`);
-            // Cerrar otros dropdowns
             document.querySelectorAll('.multi-select-options').forEach(el => {
                 if(el.id !== `options-${filterType}`) el.classList.remove('active');
             });
             dropdown.classList.toggle('active');
-            event.stopPropagation(); // Evitar que el clic cierre el dropdown inmediatamente
+            event.stopPropagation();
         }
 
-        // Cerrar al hacer clic fuera
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.multi-select-container')) {
                 document.querySelectorAll('.multi-select-options').forEach(el => el.classList.remove('active'));
@@ -609,7 +640,6 @@
             const iniciativas = [...new Set(appState.data.map(d => d.iniciativa).filter(Boolean))];
             const statuses = [...new Set(appState.data.map(d => d.status).filter(Boolean))];
             const prioridades = [...new Set(appState.data.map(d => d.prioridad).filter(Boolean))];
-            // Flatten de canales ya que ahora es un arreglo por proyecto
             const canales = [...new Set(appState.data.flatMap(d => d.canales).filter(c => c && c !== '-'))];
 
             renderCheckboxes('pilar', pilares);
@@ -633,10 +663,8 @@
             const container = document.getElementById(`options-${filterType}`);
             const checkboxes = container.querySelectorAll('input[type="checkbox"]:checked');
             
-            // Actualizar el estado global con las selecciones
             appState.activeFilters[filterType] = Array.from(checkboxes).map(cb => cb.value);
 
-            // Modificar el texto del botón
             const btnText = document.querySelector(`#dropdown-${filterType} .selected-text`);
             if (appState.activeFilters[filterType].length === 0) {
                 btnText.innerText = (filterType === 'iniciativa' || filterType === 'prioridad') ? 'Todas' : 'Todos';
@@ -655,60 +683,40 @@
             
             appState.filteredData = appState.data.filter(item => {
                 let match = true;
-                
-                // Lógica de Multiselección (Array contains)
                 if (appState.activeFilters.pilar.length > 0 && !appState.activeFilters.pilar.includes(item.pilar)) match = false;
                 if (appState.activeFilters.iniciativa.length > 0 && !appState.activeFilters.iniciativa.includes(item.iniciativa)) match = false;
                 if (appState.activeFilters.status.length > 0 && !appState.activeFilters.status.includes(item.status)) match = false;
                 if (appState.activeFilters.prioridad.length > 0 && !appState.activeFilters.prioridad.includes(item.prioridad)) match = false;
-                
-                // Intersección de arreglos para canales
                 if (appState.activeFilters.canal.length > 0) {
                     const intersect = item.canales.some(c => appState.activeFilters.canal.includes(c));
                     if(!intersect) match = false;
                 }
-                
-                // Búsqueda de texto
                 if (filterSearch && (!item.proyecto || !item.proyecto.toLowerCase().includes(filterSearch))) match = false;
-                
                 return match;
             });
-
             renderAllViews();
         }
 
         function resetFilters() {
-            // Vaciar arreglos
             appState.activeFilters = { pilar: [], iniciativa: [], status: [], canal: [], prioridad: [] };
-            
-            // Desmarcar checkboxes visualmente
             document.querySelectorAll('.multi-select-options input[type="checkbox"]').forEach(cb => cb.checked = false);
-            
-            // Reiniciar textos
             document.querySelector('#dropdown-pilar .selected-text').innerText = 'Todos';
             document.querySelector('#dropdown-iniciativa .selected-text').innerText = 'Todas';
             document.querySelector('#dropdown-status .selected-text').innerText = 'Todos';
             document.querySelector('#dropdown-canal .selected-text').innerText = 'Todos';
             document.querySelector('#dropdown-prioridad .selected-text').innerText = 'Todas';
-            
-            // Limpiar buscador
             document.getElementById('filter-search').value = '';
-            
             applyFilters();
         }
 
-        // FUNCIONES DE SINCRONIZACIÓN MANUAL Y TOAST
         async function syncData() {
             document.getElementById('loader').style.display = 'flex';
-            
             appState.data = [];
-            
             await fetchGoogleSheetData();
             processDataStructure();
-            loadLocalData(); // Recargar la data local después de traer la de Sheets
-            applyDigitalTemplate(); // Aplicar plantilla a proyectos nuevos que hayan entrado de Sheets
+            loadLocalData(); 
+            applyDigitalTemplate(); 
             renderAllViews();
-            
             document.getElementById('loader').style.display = 'none';
             showToast("Datos sincronizados con Google Sheets y Memoria Local");
         }
@@ -717,19 +725,12 @@
             const toast = document.getElementById('toast-notification');
             document.getElementById('toast-message').innerText = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
-        // MOTOR DE RENDERIZADO
         function renderAllViews() {
-            renderResumen();
-            renderRoadmap();
-            renderKanban();
-            renderCalendar();
-            renderProyectos();
-            renderBacklogTasks();
+            renderResumen(); renderRoadmap(); renderKanban();
+            renderCalendar(); renderProyectos(); renderBacklogTasks();
         }
         
         function renderResumen() {
@@ -744,10 +745,9 @@
                 return;
             }
 
-            const today = new Date(); // Fecha actual real para cálculos
-            today.setHours(0, 0, 0, 0); // Normalizar a medianoche
+            const today = new Date(); 
+            today.setHours(0, 0, 0, 0); 
 
-            // --- CÁLCULO DE KPIS EJECUTIVOS (Tarjetas Superiores) ---
             let kpiAvanzado = 0;
             let kpiPendientes = 0;
             let kpiAlertas = 0;
@@ -761,13 +761,12 @@
                         const end = new Date(t.fechaFin);
                         if (!isNaN(end)) {
                             end.setHours(0, 0, 0, 0); 
-                            end.setDate(end.getDate() + 1); // Corrección zona horaria
+                            end.setDate(end.getDate() + 1); 
                         }
-                        
                         if (!isNaN(end) && today > end) {
-                            kpiAlertas++; // Vencido y no completado
+                            kpiAlertas++; 
                         } else {
-                            kpiPendientes++; // En tiempo (Backlog o En progreso)
+                            kpiPendientes++; 
                         }
                     }
                 });
@@ -792,10 +791,8 @@
                     </div>
                 `;
             }
-            // --- FIN CÁLCULO KPIS ---
 
             let groups = {};
-            
             if (agrupacion === 'total') {
                 groups['Avance Global del Portafolio'] = appState.filteredData;
             } else if (agrupacion === 'pilar') {
@@ -822,7 +819,6 @@
             }
 
             let html = '';
-            
             for (const [groupName, items] of Object.entries(groups)) {
                 let totalTasks = 0;
                 let scoreReal = 0;
@@ -833,11 +829,9 @@
                     totalTasks += tareas.length;
                     
                     tareas.forEach(t => {
-                        // Cálculo Real
                         if (t.estado === 'Completado') scoreReal += 1;
                         else if (t.estado === 'En Progreso') scoreReal += 0.5;
                         
-                        // Cálculo Esperado (Basado en fechas precisas contra el día de hoy)
                         if (t.fechaInicio && t.fechaFin) {
                             const start = new Date(t.fechaInicio);
                             const end = new Date(t.fechaFin);
@@ -861,7 +855,6 @@
                 let porcentajeReal = totalTasks > 0 ? Math.round((scoreReal / totalTasks) * 100) : 0;
                 let porcentajeEsperado = totalTasks > 0 ? Math.round((scoreEsperado / totalTasks) * 100) : 0;
                 
-                // Fallback visual si el proyecto no tiene tareas cargadas aún
                 if(totalTasks === 0 && items.length > 0) {
                     const countEnDesarrollo = items.filter(d => d.status && d.status.toLowerCase() !== 'backlog').length;
                     porcentajeReal = Math.round((countEnDesarrollo / items.length) * 100);
@@ -902,7 +895,7 @@
         function renderRoadmap() {
             const container = document.getElementById('roadmap-container');
             const viewMode = appState.ganttViewMode || 'weeks';
-            const numMonths = 12; // Horizonte de 1 año (Oct 2026 - Sep 2027)
+            const numMonths = 12; 
             const totalCols = viewMode === 'weeks' ? numMonths * 4 : numMonths;
             const monthNames = ['Oct', 'Nov', 'Dic', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'];
             
@@ -918,7 +911,6 @@
                     <div class="gantt-grid" style="grid-template-columns: 250px repeat(${totalCols}, minmax(${viewMode === 'weeks' ? '40px' : '80px'}, 1fr));">
             `;
 
-            // Headers
             html += `<div class="gantt-header" style="grid-column: 1; grid-row: 1 / 3; display:flex; align-items:center; text-align:left;">Proyecto / Hito Operativo</div>`;
             
             for(let m = 0; m < numMonths; m++) {
@@ -935,14 +927,12 @@
                 html += `<div class="gantt-header" style="grid-column: 2 / -1; padding: 0; border: none; height: 0;"></div>`;
             }
 
-            // Usamos la data filtrada para pintar el Gantt
-            const baseDate = new Date(2026, 9, 1); // Inicio Q4: 1 de Octubre de 2026
+            const baseDate = new Date(2026, 9, 1); 
 
             appState.filteredData.forEach((item, pIdx) => {
                 const colorClass = getPilarColor(item.pilar);
                 const tareas = appState.tareas[item.proyecto] || [];
                 
-                // Fila del Proyecto Padre (Interactiva para colapsar/expandir tareas hijas)
                 html += `
                 <div class="gantt-row">
                     <div class="gantt-title" title="${item.iniciativa}" onclick="toggleGanttTasks(${pIdx})" style="cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
@@ -952,14 +942,11 @@
                     <div class="gantt-track" style="background: var(--slate-50); grid-template-columns: repeat(${totalCols}, 1fr);"></div>
                 </div>`;
                 
-                // Contenedor de las tareas hijas
                 html += `<div id="gantt-tasks-${pIdx}" style="display: contents;">`;
                 
-                // Filas de los Hitos (Tareas) sincronizadas con fechas
                 tareas.forEach(tarea => {
                     const start = new Date(tarea.fechaInicio);
                     const end = new Date(tarea.fechaFin);
-                    
                     let colStart = 1; let colSpan = 1; 
                     
                     if(!isNaN(start) && !isNaN(end)) {
@@ -976,8 +963,6 @@
                             const colEnd = Math.min(totalCols, monthEnd + 1);
                             colSpan = Math.max(1, colEnd - colStart + 1);
                         }
-                        
-                        // Limit to bounds
                         if (colStart > totalCols) colStart = totalCols;
                     }
                     
@@ -992,23 +977,20 @@
                     </div>`;
                 });
                 
-                html += `</div>`; // Cierra el contenedor de tareas
+                html += `</div>`; 
             });
             
-            html += `</div></div>`; // Cierra grid y wrapper
+            html += `</div></div>`; 
             container.innerHTML = html;
         }
 
         function toggleGanttTasks(index) {
             const container = document.getElementById(`gantt-tasks-${index}`);
             const icon = document.getElementById(`icon-gantt-${index}`);
-            
             if (container.style.display === 'contents' || container.style.display === '') {
-                // Colapsar
                 container.style.display = 'none';
                 icon.style.transform = 'rotate(-90deg)';
             } else {
-                // Expandir
                 container.style.display = 'contents';
                 icon.style.transform = 'rotate(0deg)';
             }
@@ -1017,8 +999,8 @@
         function renderProyectos() {
             const container = document.getElementById('proyectos-container');
             let html = '';
+            const isLector = appState.currentUser?.role === 'lector';
 
-            // Re-agrupar data basada en la lista global filtrada
             const grouped = {};
             appState.filteredData.forEach(item => {
                 if (!grouped[item.pilar]) grouped[item.pilar] = {};
@@ -1041,7 +1023,7 @@
                             <td><span class="status-badge" style="background:#dbeafe; color:#1e40af;">${proj.canales.join(', ')}</span></td>
                             <td>${proj.prioridad}</td>
                             <td><span class="status-badge bg-slate-200" style="background:#e2e8f0;">${proj.status || 'Backlog'}</span></td>
-                            <td style="text-align: center;"><button class="btn-icon" onclick="openProjectModal('${proj.proyecto.replace(/'/g, "\\'")}')">✏️ Editar</button></td>
+                            ${isLector ? '' : `<td style="text-align: center;"><button class="btn-icon" onclick="openProjectModal('${proj.proyecto.replace(/'/g, "\\'")}')">✏️ Editar</button></td>`}
                         </tr>
                     `).join('');
 
@@ -1055,7 +1037,7 @@
                         <div style="overflow-x: auto;">
                             <table>
                                 <thead>
-                                    <tr><th>Proyecto</th><th>Canales</th><th>Prioridad</th><th>Status General</th><th style="text-align: center;">Acciones</th></tr>
+                                    <tr><th>Proyecto</th><th>Canales</th><th>Prioridad</th><th>Status General</th>${isLector ? '' : '<th style="text-align: center;">Acciones</th>'}</tr>
                                 </thead>
                                 <tbody>${tableRows}</tbody>
                             </table>
@@ -1066,16 +1048,16 @@
             container.innerHTML = html;
         }
         
-        // --- VISTA KANBAN ---
         function renderKanban() {
             const container = document.getElementById('kanban-container');
+            const isLector = appState.currentUser?.role === 'lector';
+            
             const columnas = {
                 'Backlog': { title: 'Backlog', color: 'var(--slate-500)', tasks: [] },
                 'En Progreso': { title: 'En Progreso', color: 'var(--blue-500)', tasks: [] },
                 'Completado': { title: 'Completado', color: 'var(--emerald-500)', tasks: [] }
             };
 
-            // Extraer tareas solo de los proyectos filtrados
             appState.filteredData.forEach(item => {
                 const project = item.proyecto;
                 const tareas = appState.tareas[project] || [];
@@ -1097,11 +1079,15 @@
                             <span>👤 ${t.responsable}</span>
                             <span>📅 ${t.fechaFin}</span>
                         </div>
-                        <select onchange="actualizarEstadoTarea('${t.project.replace(/'/g, "\\'")}', ${t.index}, this.value); renderAllViews();" style="width: 100%; padding: 4px; margin-top: 8px; border: 1px solid var(--slate-300); border-radius: 4px; font-size: 0.75rem;">
-                            <option ${t.estado === 'Backlog' ? 'selected' : ''}>Backlog</option>
-                            <option ${t.estado === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
-                            <option ${t.estado === 'Completado' ? 'selected' : ''}>Completado</option>
-                        </select>
+                        ${isLector ? 
+                            `<div style="margin-top: 8px; font-size: 0.75rem; font-weight: 600; color: var(--slate-500);">Estado: ${t.estado}</div>` 
+                            :
+                            `<select onchange="actualizarEstadoTarea('${t.project.replace(/'/g, "\\'")}', ${t.index}, this.value); renderAllViews();" style="width: 100%; padding: 4px; margin-top: 8px; border: 1px solid var(--slate-300); border-radius: 4px; font-size: 0.75rem;">
+                                <option ${t.estado === 'Backlog' ? 'selected' : ''}>Backlog</option>
+                                <option ${t.estado === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
+                                <option ${t.estado === 'Completado' ? 'selected' : ''}>Completado</option>
+                            </select>`
+                        }
                     </div>
                 `).join('');
 
@@ -1119,12 +1105,11 @@
             container.innerHTML = html;
         }
 
-        // --- VISTA AGENDA / CALENDARIO ---
         function renderCalendar() {
             const container = document.getElementById('agenda-container');
-            let allTasks = [];
+            const isLector = appState.currentUser?.role === 'lector';
+            const allTasks = []; 
 
-            // Reunir todas las tareas
             appState.filteredData.forEach(item => {
                 const project = item.proyecto;
                 const tareas = appState.tareas[project] || [];
@@ -1135,7 +1120,6 @@
                 });
             });
 
-            // Ordenar por fecha de vencimiento más próxima
             allTasks.sort((a, b) => a.dateObj - b.dateObj);
 
             if (allTasks.length === 0) {
@@ -1162,7 +1146,7 @@
                         ${isLate ? `<div style="color: var(--red-500); font-size: 0.75rem; font-weight: 700; margin-top: 4px;">⚠️ Vencido</div>` : ''}
                     </div>
                     <div>
-                        <button class="btn-icon" onclick="switchView('view-backlogs', 'Backlog de Tareas', 'Gestión de Hitos'); openTaskModal(${t.index}, '${t.project.replace(/'/g, "\\'")}')">Ver / Editar</button>
+                        <button class="btn-icon" onclick="switchView('view-backlogs', 'Backlog de Tareas', 'Gestión de Hitos'); ${!isLector ? `openTaskModal(${t.index}, '${t.project.replace(/'/g, "\\'")}')` : ''}">${isLector ? 'Ver Detalle' : 'Ver / Editar'}</button>
                     </div>
                 </div>
             `}).join('');
@@ -1170,17 +1154,14 @@
             container.innerHTML = html;
         }
 
-        // --- GESTIÓN CRUD DE PROYECTOS (AÑADIR / EDITAR) ---
         function openProjectModal(projectName = null) {
             const modal = document.getElementById('projectModalOverlay');
             const title = document.getElementById('projectModalTitle');
             const submitBtn = document.getElementById('proj-submit-btn');
             
-            // Resetear checkboxes de canales
             document.querySelectorAll('.proj-canal-cb').forEach(cb => cb.checked = false);
 
             if(projectName) {
-                // Modo Edición
                 const projIndex = appState.data.findIndex(p => p.proyecto === projectName);
                 if(projIndex > -1) {
                     appState.editingProjectData = appState.data[projIndex];
@@ -1190,7 +1171,6 @@
                     document.getElementById('proj-prioridad').value = appState.editingProjectData.prioridad;
                     document.getElementById('proj-status').value = appState.editingProjectData.status;
                     
-                    // Marcar canales correspondientes
                     appState.editingProjectData.canales.forEach(c => {
                         const cb = document.querySelector(`.proj-canal-cb[value="${c}"]`);
                         if(cb) cb.checked = true;
@@ -1200,7 +1180,6 @@
                     submitBtn.innerText = "Actualizar Cambios";
                 }
             } else {
-                // Modo Creación
                 appState.editingProjectData = null;
                 document.getElementById('proj-name').value = '';
                 document.getElementById('proj-pilar').value = '';
@@ -1210,7 +1189,6 @@
                 title.innerText = "Agregar Nuevo Proyecto";
                 submitBtn.innerText = "Guardar Proyecto";
             }
-            
             modal.style.display = 'flex';
         }
 
@@ -1227,10 +1205,9 @@
             
             let canales = [];
             document.querySelectorAll('.proj-canal-cb:checked').forEach(cb => canales.push(cb.value));
-            if(canales.length === 0) canales.push('Todos'); // Fallback
+            if(canales.length === 0) canales.push('Todos');
 
             if (appState.editingProjectData) {
-                // Actualizar existente
                 const oldName = appState.editingProjectData.proyecto;
                 appState.editingProjectData.proyecto = nombre;
                 appState.editingProjectData.pilar = pilar;
@@ -1239,28 +1216,25 @@
                 appState.editingProjectData.status = status;
                 appState.editingProjectData.canales = canales;
                 
-                // Mover tareas al nuevo nombre de proyecto para no perder el backlog
                 if(oldName !== nombre) {
                     appState.tareas[nombre] = appState.tareas[oldName] || [];
                     delete appState.tareas[oldName];
                 }
                 showToast("Proyecto actualizado exitosamente");
             } else {
-                // Crear nuevo y colocarlo al inicio
                 appState.data.unshift({
-                    proyecto: nombre, pilar, iniciativa, prioridad, status, canales, isLocal: true // Marcado como local para guardarlo
+                    proyecto: nombre, pilar, iniciativa, prioridad, status, canales, isLocal: true 
                 });
                 appState.tareas[nombre] = [];
                 showToast("Nuevo proyecto agregado al portafolio");
             }
             
-            saveLocalData(); // Guardar en el disco duro del navegador
+            saveLocalData(); 
             closeProjectModal();
-            populateFilters(); // Refrescar filtros para incluir nuevos pilares/canales si los hubiera
-            applyFilters();    // Re-renderizar toda la vista
+            populateFilters(); 
+            applyFilters();    
         }
 
-        // --- SISTEMA DE EXPORTACIÓN (UNIVERSAL BLOB) ---
         function exportData(type) {
             const data = appState.filteredData;
             if(data.length === 0) { showToast("No hay datos para exportar"); return; }
@@ -1275,7 +1249,6 @@
                 return;
             } else if (type === 'csv') {
                 const headers = ['Pilar', 'Iniciativa', 'Proyecto', 'Canales', 'Prioridad', 'Status'];
-                // \uFEFF es el BOM (Byte Order Mark) para forzar UTF-8 en MS Excel
                 content = '\uFEFF' + headers.join(',') + '\n';
                 data.forEach(d => {
                     content += `"${d.pilar}","${d.iniciativa}","${d.proyecto}","${d.canales.join(' / ')}","${d.prioridad}","${d.status}"\n`;
@@ -1333,10 +1306,9 @@
             }
         }
 
-        // BACKLOG DE TAREAS / HITOS
         function renderBacklogTasks() {
             const container = document.getElementById('tasks-container');
-            
+            const isLector = appState.currentUser?.role === 'lector';
             if(appState.filteredData.length === 0) {
                 container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--slate-500); background: white; border-radius: var(--radius-lg); border: 1px dashed var(--slate-300);">No hay proyectos que coincidan con los filtros.</div>';
                 return;
@@ -1358,15 +1330,19 @@
                             <td>${t.responsable}</td>
                             <td style="font-size:0.75rem; color:var(--slate-500);">${t.fechaInicio}<br>a ${t.fechaFin}</td>
                             <td>
-                                <select onchange="actualizarEstadoTarea('${project.replace(/'/g, "\\'")}', ${index}, this.value)" style="padding: 4px; border: 1px solid var(--slate-300); border-radius: 4px; font-size: 0.8rem;">
-                                    <option ${t.estado === 'Backlog' ? 'selected' : ''}>Backlog</option>
-                                    <option ${t.estado === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
-                                    <option ${t.estado === 'Completado' ? 'selected' : ''}>Completado</option>
-                                </select>
+                                ${isLector ? 
+                                    `<span style="font-size: 0.8rem; font-weight: 500;">${t.estado}</span>` 
+                                    :
+                                    `<select onchange="actualizarEstadoTarea('${project.replace(/'/g, "\\'")}', ${index}, this.value)" style="padding: 4px; border: 1px solid var(--slate-300); border-radius: 4px; font-size: 0.8rem;">
+                                        <option ${t.estado === 'Backlog' ? 'selected' : ''}>Backlog</option>
+                                        <option ${t.estado === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
+                                        <option ${t.estado === 'Completado' ? 'selected' : ''}>Completado</option>
+                                    </select>`
+                                }
                             </td>
-                            <td style="text-align: center;">
+                            ${isLector ? '' : `<td style="text-align: center;">
                                 <button class="btn-icon" onclick="openTaskModal(${index}, '${project.replace(/'/g, "\\'")}')" title="Editar Tarea">✏️ Editar</button>
-                            </td>
+                            </td>`}
                         </tr>
                     `).join('');
                 }
@@ -1378,12 +1354,12 @@
                                 <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--slate-900);">${project}</h3>
                                 <p style="font-size: 0.85rem; color: var(--slate-500); margin-top: 4px;">Pilar: ${item.pilar} | Iniciativa: ${item.iniciativa}</p>
                             </div>
-                            <button class="btn-primary" onclick="openTaskModal(null, '${project.replace(/'/g, "\\'")}')">+ Agregar Hito/Acción</button>
+                            ${isLector ? '' : `<button class="btn-primary" onclick="openTaskModal(null, '${project.replace(/'/g, "\\'")}')">+ Agregar Hito/Acción</button>`}
                         </div>
                         <div style="overflow-x: auto;">
                             <table>
                                 <thead>
-                                    <tr><th>Hito / Acción Operativa</th><th>Responsable</th><th>Fechas</th><th>Estado (Inline)</th><th style="text-align: center;">Acciones</th></tr>
+                                    <tr><th>Hito / Acción Operativa</th><th>Responsable</th><th>Fechas</th><th>Estado (Inline)</th>${isLector ? '' : '<th style="text-align: center;">Acciones</th>'}</tr>
                                 </thead>
                                 <tbody>${tableRows}</tbody>
                             </table>
@@ -1412,7 +1388,6 @@
             appState.editingTaskIndex = taskIndex;
             
             if (taskIndex !== null) {
-                // Modo Edición
                 const tarea = appState.tareas[project][taskIndex];
                 document.getElementById('task-name').value = tarea.nombre;
                 document.getElementById('task-assignee').value = tarea.responsable;
@@ -1424,7 +1399,6 @@
                 modalTitle.innerText = "Editar Hito: " + truncProject;
                 submitBtn.innerText = "Guardar Cambios";
             } else {
-                // Modo Creación
                 document.getElementById('task-name').value = '';
                 document.getElementById('task-assignee').value = '';
                 document.getElementById('task-start').value = '';
@@ -1460,28 +1434,25 @@
             }
             
             if (appState.editingTaskIndex !== null) {
-                // Actualizar hito existente
                 appState.tareas[project][appState.editingTaskIndex] = { nombre, responsable, fechaInicio, fechaFin, estado };
                 showToast("Hito actualizado y sincronizado al Roadmap");
             } else {
-                // Agregar nuevo hito
                 appState.tareas[project].push({ nombre, responsable, fechaInicio, fechaFin, estado });
                 showToast("Hito agregado y sincronizado al Roadmap");
             }
             
-            saveLocalData(); // Guardar en el disco duro del navegador
+            saveLocalData(); 
             closeTaskModal();
             renderBacklogTasks();
-            renderRoadmap(); // Actualiza el Gantt inmediatamente
+            renderRoadmap(); 
         }
 
         function actualizarEstadoTarea(project, index, nuevoEstado) {
             appState.tareas[project][index].estado = nuevoEstado;
-            saveLocalData(); // Guardar en el disco duro del navegador
+            saveLocalData(); 
             showToast("Estado actualizado");
         }
 
-        // NAVEGACIÓN
         function switchView(viewId, title, subtitle) {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
             event.currentTarget.classList.add('active');
