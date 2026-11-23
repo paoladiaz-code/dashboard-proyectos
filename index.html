@@ -163,7 +163,7 @@
                 Ingresar al Portafolio
             </button>
             
-            <p style="font-size: 11px; color: #94a3b8; margin-top: 20px;">Roles de prueba: <b>admin@</b> (Edición) o <b>lector@</b> (Solo lectura)</p>
+            <p style="font-size: 11px; color: #94a3b8; margin-top: 20px;"><b>admin@latinka.com.pe</b>: Propietario (Gestión de Accesos)<br>Otros correos: Lectores (A menos que el admin los haga editores).</p>
         </div>
     </div>
 
@@ -226,6 +226,9 @@
                         <button class="export-btn" onclick="exportData('pdf')">🖨️ Archivo PDF (Imprimir)</button>
                     </div>
                 </div>
+                <button id="btn-admin-access" class="btn-secondary" onclick="openAccessModal()" style="display: none; align-items: center; gap: 6px;">
+                    ⚙️ Accesos
+                </button>
                 <button class="btn-primary" onclick="syncData()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
                     Sincronizar Datos
@@ -424,6 +427,28 @@
         </div>
     </div>
 
+    <!-- MODAL GESTIÓN DE ACCESOS (ADMIN) -->
+    <div id="accessModalOverlay" class="loader-overlay" style="display: none; background: rgba(15, 23, 42, 0.6); align-items: center;">
+        <div style="background: white; padding: 24px; border-radius: var(--radius-lg); width: 400px; box-shadow: var(--shadow-md);">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--slate-900);">Gestión de Editores</h3>
+            <p style="font-size: 0.8rem; color: var(--slate-500); margin-bottom: 16px;">Agrega los correos corporativos que tendrán permisos para crear proyectos y modificar hitos operacionales.</p>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <input type="email" id="new-editor-email" placeholder="ejemplo@latinka.com.pe" style="flex: 1; padding: 8px; border: 1px solid var(--slate-300); border-radius: 4px; font-size: 0.85rem;">
+                <button class="btn-primary" onclick="addEditor()">Agregar</button>
+            </div>
+            
+            <label style="font-size: 0.75rem; font-weight: 600; color: var(--slate-700); text-transform: uppercase;">Editores Actuales:</label>
+            <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: 4px; padding: 8px; margin-top: 4px;" id="editors-list">
+                <!-- Se inyecta la lista con JS -->
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                <button type="button" class="btn-secondary" onclick="closeAccessModal()">Cerrar Panel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST ELEMENT -->
     <div id="toast-notification" class="toast">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
@@ -443,7 +468,8 @@
             currentProjectForModal: null, 
             ganttViewMode: 'weeks', 
             editingProjectData: null, 
-            currentUser: null 
+            currentUser: null,
+            editors: []
         };
 
         const fallbackData = [
@@ -517,13 +543,26 @@
             const loginBtn = document.getElementById('login-btn');
             const emailInput = document.getElementById('login-email');
             
+            // Cargar lista de editores desde la memoria
+            const savedEditors = localStorage.getItem('pmo_editors_v1');
+            if (savedEditors) appState.editors = JSON.parse(savedEditors);
+
             document.getElementById('loader').style.display = 'none';
 
             function procesarLogin() {
                 const email = emailInput.value.trim().toLowerCase();
                 if (email.endsWith('@latinka.com.pe')) {
-                    const userRole = (email.startsWith('admin') || email.startsWith('editor')) ? 'admin' : 'lector';
+                    
+                    let userRole = 'lector';
+                    if (email === 'admin@latinka.com.pe') {
+                        userRole = 'admin'; // El dueño
+                    } else if (appState.editors.includes(email) || email.startsWith('editor')) {
+                        userRole = 'editor'; // Los delegados
+                    }
+
                     localStorage.setItem('pmo_user_role', userRole);
+                    appState.currentUser = { email: email, role: userRole };
+                    
                     authOverlay.style.display = 'none';
                     aplicarRolesUI(userRole);
                     iniciarDashboard(); 
@@ -537,7 +576,15 @@
         });
 
         function aplicarRolesUI(role) {
-            appState.currentUser = { role: role };
+            if (!appState.currentUser) appState.currentUser = { role: role };
+            appState.currentUser.role = role;
+            
+            // Si es Admin, mostrar el botón de Accesos
+            if (role === 'admin') {
+                const btnAccess = document.getElementById('btn-admin-access');
+                if(btnAccess) btnAccess.style.display = 'inline-flex';
+            }
+
             if (role === 'lector') {
                 const style = document.createElement('style');
                 style.innerHTML = `
@@ -1460,6 +1507,63 @@
             document.getElementById('header-subtitle').innerText = subtitle;
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
+        }
+        
+        // ==========================================
+        // FUNCIONES DE GESTIÓN DE ACCESOS (ADMIN)
+        // ==========================================
+        function openAccessModal() {
+            renderEditorsList();
+            document.getElementById('accessModalOverlay').style.display = 'flex';
+        }
+
+        function closeAccessModal() {
+            document.getElementById('accessModalOverlay').style.display = 'none';
+        }
+
+        function renderEditorsList() {
+            const list = document.getElementById('editors-list');
+            if (appState.editors.length === 0) {
+                list.innerHTML = '<p style="color: var(--slate-400); font-size: 0.85rem; text-align: center; margin: 16px 0;">No hay editores adicionales.<br>Solo el Admin puede editar.</p>';
+                return;
+            }
+            list.innerHTML = appState.editors.map(email => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--slate-100); font-size: 0.85rem;">
+                    <span style="font-weight: 500; color: var(--slate-700);">${email}</span>
+                    <button class="btn-icon" style="color: var(--red-500); border-color: transparent; font-size: 0.75rem;" onclick="removeEditor('${email}')" title="Quitar acceso">Eliminar</button>
+                </div>
+            `).join('');
+        }
+
+        function addEditor() {
+            const input = document.getElementById('new-editor-email');
+            const email = input.value.trim().toLowerCase();
+            
+            if (!email || !email.endsWith('@latinka.com.pe')) {
+                alert("Por favor, ingresa un correo válido que termine en @latinka.com.pe");
+                return;
+            }
+            if (email === 'admin@latinka.com.pe') {
+                alert("El admin ya tiene control total por defecto.");
+                return;
+            }
+            if (appState.editors.includes(email)) {
+                alert("Este correo ya está registrado como editor.");
+                return;
+            }
+
+            appState.editors.push(email);
+            localStorage.setItem('pmo_editors_v1', JSON.stringify(appState.editors));
+            input.value = '';
+            renderEditorsList();
+            showToast("✅ Nuevo editor agregado exitosamente");
+        }
+
+        function removeEditor(email) {
+            appState.editors = appState.editors.filter(e => e !== email);
+            localStorage.setItem('pmo_editors_v1', JSON.stringify(appState.editors));
+            renderEditorsList();
+            showToast("❌ Acceso de editor revocado");
         }
     </script>
 </body>
