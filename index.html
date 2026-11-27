@@ -322,7 +322,10 @@
 
             <!-- VIEW 5: PROYECTOS -->
             <section id="view-proyectos" class="view-section">
-                <div style="display: flex; justify-content: flex-end; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <button class="btn-secondary btn-editor-only" id="btn-carga-masiva" onclick="openBatchModal()" style="display: inline-flex; align-items: center; gap: 6px;">
+                        📤 Carga Masiva (CSV)
+                    </button>
                     <button class="btn-primary" id="btn-nuevo-proyecto" onclick="openProjectModal()">+ Nuevo Proyecto</button>
                 </div>
                 <div id="proyectos-container"></div>
@@ -443,6 +446,64 @@
             
             <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
                 <button type="button" class="btn-secondary" onclick="closeAccessModal()">Cerrar Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CARGA MASIVA DE PROYECTOS (BATCH) -->
+    <div id="batchModalOverlay" class="loader-overlay" style="display: none; background: rgba(15, 23, 42, 0.6); align-items: center;">
+        <div style="background: white; padding: 24px; border-radius: var(--radius-lg); width: 92%; max-width: 560px; box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto;">
+            <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; color: var(--slate-900);">Carga Masiva de Proyectos (Batch)</h3>
+            <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 16px;">Importa múltiples proyectos al portafolio usando nuestra plantilla estándar. Para asignar varios canales a un proyecto, sepáralos con una barra inclinada (ej. <b>Digital / Operado</b>).</p>
+
+            <!-- Paso 1: Descargar Plantilla -->
+            <div style="background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <div>
+                    <div style="font-size: 0.85rem; font-weight: 600; color: var(--slate-800);">Paso 1: Descarga la plantilla</div>
+                    <div style="font-size: 0.75rem; color: var(--slate-500);">Formato CSV compatible con Excel y Google Sheets.</div>
+                </div>
+                <button type="button" class="btn-secondary" onclick="downloadBatchTemplate()" style="padding: 8px 14px; font-size: 0.8rem;">
+                    ⬇️ Descargar Plantilla
+                </button>
+            </div>
+
+            <!-- Paso 2: Subir Archivo -->
+            <div id="batch-dropzone" onclick="document.getElementById('batch-file-input').click()" 
+                 ondragover="event.preventDefault(); this.style.borderColor='var(--blue-500)'; this.style.background='#eff6ff';" 
+                 ondragleave="this.style.borderColor='var(--slate-300)'; this.style.background='white';"
+                 ondrop="handleBatchDrop(event)"
+                 style="border: 2px dashed var(--slate-300); border-radius: var(--radius-md); padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 16px;">
+                <div style="font-size: 1.5rem; margin-bottom: 6px;">📂</div>
+                <div style="font-size: 0.9rem; font-weight: 600; color: var(--slate-700);">Paso 2: Haz clic o arrastra tu archivo .CSV aquí</div>
+                <div id="batch-file-name" style="font-size: 0.8rem; color: var(--slate-500); margin-top: 4px;">Ningún archivo seleccionado</div>
+                <input type="file" id="batch-file-input" accept=".csv,text/csv" style="display: none;" onchange="handleBatchFileSelect(event)">
+            </div>
+
+            <!-- Feedback y Vista Previa -->
+            <div id="batch-feedback" style="display: none; padding: 12px; border-radius: var(--radius-md); font-size: 0.85rem; margin-bottom: 16px;"></div>
+            
+            <div id="batch-preview-container" style="display: none; margin-bottom: 16px;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--slate-500); text-transform: uppercase; margin-bottom: 6px;">Vista Previa (Primeros 5 registros):</div>
+                <div style="max-height: 160px; overflow-y: auto; border: 1px solid var(--slate-200); border-radius: var(--radius-md);">
+                    <table style="font-size: 0.75rem;">
+                        <thead>
+                            <tr>
+                                <th style="padding: 8px 10px;">Proyecto</th>
+                                <th style="padding: 8px 10px;">Pilar</th>
+                                <th style="padding: 8px 10px;">Canales</th>
+                                <th style="padding: 8px 10px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batch-preview-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+                <button type="button" class="btn-secondary" onclick="closeBatchModal()">Cancelar</button>
+                <button type="button" class="btn-primary" id="btn-confirm-batch" onclick="confirmBatchImport()" disabled style="opacity: 0.5; cursor: not-allowed;">
+                    Importar Proyectos
+                </button>
             </div>
         </div>
     </div>
@@ -588,6 +649,7 @@
                 style.innerHTML = `
                     .btn-primary { display: none !important; } 
                     .btn-icon { display: none !important; } 
+                    .btn-editor-only { display: none !important; }
                     td select, .kanban-card select { pointer-events: none; border: none; background: transparent; -webkit-appearance: none; appearance: none; font-weight: 700; }
                 `;
                 document.head.appendChild(style);
@@ -1562,6 +1624,241 @@
             localStorage.setItem('pmo_editors_v1', JSON.stringify(appState.editors));
             renderEditorsList();
             showToast("❌ Acceso de editor revocado");
+        }
+
+        // ==========================================
+        // FUNCIONES DE CARGA MASIVA (BATCH CSV)
+        // ==========================================
+        let batchParsedProjects = [];
+
+        function openBatchModal() {
+            batchParsedProjects = [];
+            document.getElementById('batch-file-input').value = '';
+            document.getElementById('batch-file-name').innerText = 'Ningún archivo seleccionado';
+            document.getElementById('batch-feedback').style.display = 'none';
+            document.getElementById('batch-preview-container').style.display = 'none';
+            const confirmBtn = document.getElementById('btn-confirm-batch');
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.cursor = 'not-allowed';
+            confirmBtn.innerText = 'Importar Proyectos';
+            document.getElementById('batchModalOverlay').style.display = 'flex';
+        }
+
+        function closeBatchModal() {
+            document.getElementById('batchModalOverlay').style.display = 'none';
+            batchParsedProjects = [];
+        }
+
+        function downloadBatchTemplate() {
+            const headers = ['Pilar', 'Iniciativa', 'Proyecto', 'Canales', 'Prioridad', 'Status'];
+            const sampleRows = [
+                ['Ganar con una oferta comercial más competitiva', 'Mayor innovación de Portafolio', 'Nuevo Juego Instantáneo Web', 'Digital', 'Alta', '1Q'],
+                ['Mayor acceso, mejor experiencia', 'Omnicanalidad Retail', 'Terminal de Autoatención en Puntos de Venta', 'Operado / Agente', 'Muy Alta', '2Q']
+            ];
+
+            let csvContent = '\uFEFF' + headers.join(',') + '\n';
+            sampleRows.forEach(row => {
+                csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            try {
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'Plantilla_Carga_Proyectos_PMO.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                setTimeout(() => URL.revokeObjectURL(url), 100);
+                showToast('Plantilla CSV descargada con éxito');
+            } catch (err) {
+                console.error('Error al descargar plantilla:', err);
+                showToast('No se pudo iniciar la descarga de la plantilla');
+            }
+        }
+
+        function handleBatchDrop(event) {
+            event.preventDefault();
+            const dropzone = document.getElementById('batch-dropzone');
+            dropzone.style.borderColor = 'var(--slate-300)';
+            dropzone.style.background = 'white';
+            if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+                processBatchFile(event.dataTransfer.files[0]);
+            }
+        }
+
+        function handleBatchFileSelect(event) {
+            if (event.target.files && event.target.files.length > 0) {
+                processBatchFile(event.target.files[0]);
+            }
+        }
+
+        // Parser robusto para líneas CSV que soporta comillas y delimitadores ',' o ';'
+        function parseCSVLine(line, delimiter) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    if (inQuotes && line[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === delimiter && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function processBatchFile(file) {
+            const feedback = document.getElementById('batch-feedback');
+            const previewContainer = document.getElementById('batch-preview-container');
+            const previewBody = document.getElementById('batch-preview-body');
+            const confirmBtn = document.getElementById('btn-confirm-batch');
+
+            document.getElementById('batch-file-name').innerText = `Archivo: ${file.name}`;
+
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                feedback.style.display = 'block';
+                feedback.style.background = '#fee2e2';
+                feedback.style.color = '#991b1b';
+                feedback.innerHTML = '⚠️ Por favor, sube un archivo con extensión <b>.csv</b>.';
+                previewContainer.style.display = 'none';
+                confirmBtn.disabled = true;
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const text = e.target.result.replace(/^\uFEFF/, ''); // Limpiar BOM
+                    const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+
+                    if (lines.length < 2) {
+                        throw new Error('El archivo no contiene filas de datos debajo de los encabezados.');
+                    }
+
+                    // Auto-detectar delimitador (Excel LATAM usa ';', Google Sheets usa ',')
+                    const headerLine = lines[0];
+                    const delimiter = (headerLine.split(';').length > headerLine.split(',').length) ? ';' : ',';
+
+                    const existingNames = new Set(appState.data.map(p => p.proyecto.trim().toLowerCase()));
+                    const validNewProjects = [];
+                    let skippedDuplicates = 0;
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const cols = parseCSVLine(lines[i], delimiter);
+                        if (cols.length < 3 || !cols[2]) continue; // Requiere al menos Pilar, Iniciativa, Proyecto
+
+                        const pilar = cols[0] || 'Sin Pilar';
+                        const iniciativa = cols[1] || 'Sin Iniciativa';
+                        const proyecto = cols[2];
+                        const rawCanales = cols[3] || 'Todos';
+                        const prioridad = cols[4] || 'Media';
+                        const status = cols[5] || 'Backlog';
+
+                        if (existingNames.has(proyecto.toLowerCase())) {
+                            skippedDuplicates++;
+                            continue;
+                        }
+
+                        // Parsear múltiples canales separados por '/', '|' o ','
+                        const canales = rawCanales
+                            .split(/[\/|,]/)
+                            .map(c => c.trim())
+                            .filter(Boolean);
+
+                        existingNames.add(proyecto.toLowerCase());
+                        validNewProjects.push({
+                            pilar,
+                            iniciativa,
+                            proyecto,
+                            canales: canales.length > 0 ? canales : ['Todos'],
+                            prioridad,
+                            status,
+                            isLocal: true
+                        });
+                    }
+
+                    batchParsedProjects = validNewProjects;
+
+                    if (validNewProjects.length === 0) {
+                        feedback.style.display = 'block';
+                        feedback.style.background = '#fef3c7';
+                        feedback.style.color = '#92400e';
+                        feedback.innerHTML = skippedDuplicates > 0
+                            ? `ℹ️ Todos los proyectos del archivo (${skippedDuplicates}) ya existen en el portafolio.`
+                            : '⚠️ No se encontraron filas válidas. Verifica que respetes las columnas de la plantilla.';
+                        previewContainer.style.display = 'none';
+                        confirmBtn.disabled = true;
+                        confirmBtn.style.opacity = '0.5';
+                        confirmBtn.style.cursor = 'not-allowed';
+                        return;
+                    }
+
+                    // Mostrar resumen y vista previa
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#d1fae5';
+                    feedback.style.color = '#065f46';
+                    feedback.innerHTML = `✅ Se detectaron <b>${validNewProjects.length} proyectos nuevos</b> listos para importar.` +
+                        (skippedDuplicates > 0 ? ` <span style="color:#92400e;">(${skippedDuplicates} duplicados omitidos)</span>` : '');
+
+                    previewBody.innerHTML = validNewProjects.slice(0, 5).map(p => `
+                        <tr>
+                            <td style="padding: 8px 10px; font-weight: 600;">${p.proyecto}</td>
+                            <td style="padding: 8px 10px;">${p.pilar}</td>
+                            <td style="padding: 8px 10px;">${p.canales.join(', ')}</td>
+                            <td style="padding: 8px 10px;">${p.status}</td>
+                        </tr>
+                    `).join('');
+
+                    previewContainer.style.display = 'block';
+                    confirmBtn.disabled = false;
+                    confirmBtn.style.opacity = '1';
+                    confirmBtn.style.cursor = 'pointer';
+                    confirmBtn.innerText = `Importar ${validNewProjects.length} Proyecto(s)`;
+                } catch (err) {
+                    feedback.style.display = 'block';
+                    feedback.style.background = '#fee2e2';
+                    feedback.style.color = '#991b1b';
+                    feedback.innerHTML = `❌ Error al leer el archivo: ${err.message}`;
+                    previewContainer.style.display = 'none';
+                    confirmBtn.disabled = true;
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function confirmBatchImport() {
+            if (batchParsedProjects.length === 0) return;
+
+            const count = batchParsedProjects.length;
+            // Insertar al inicio del portafolio para visibilidad inmediata
+            batchParsedProjects.reverse().forEach(proj => {
+                appState.data.unshift(proj);
+                if (!appState.tareas[proj.proyecto]) {
+                    appState.tareas[proj.proyecto] = [];
+                }
+            });
+
+            // Aplicar plantilla de 10 hitos a los nuevos proyectos del canal Digital
+            applyDigitalTemplate();
+            saveLocalData();
+            closeBatchModal();
+            populateFilters();
+            applyFilters();
+            showToast(`✅ ${count} proyecto(s) importados exitosamente en batch`);
         }
     </script>
 </body>
